@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}My Profile - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4>My Profile</h4>
+    <div class="subtitle">Your account information</div>
+</div>
+
+{% if employee %}
+<div class="row g-4">
+    <div class="col-md-5 col-lg-4">
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <div class="avatar-gradient avatar-lg mx-auto mb-3">
+                    {{ request.user.first_name.0 }}{{ request.user.last_name.0 }}
+                </div>
+                <h5 class="fw-bold mb-1">{{ employee.full_name }}</h5>
+                <div class="text-muted mb-3">{{ employee.get_department_display }}</div>
+                <span class="badge" style="background:var(--blue-light); color:var(--blue); font-size:.8rem; padding:6px 14px;">{{ employee.role.name }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7 col-lg-8">
+        <div class="card">
+            <div class="card-header"><h6>Details</h6></div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="detail-label">Employee ID</div>
+                        <div class="detail-value">{{ employee.employee_id }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value">{{ employee.get_department_display }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Phone</div>
+                        <div class="detail-value">{{ employee.phone }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">{{ employee.user.email|default:"—" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Joined</div>
+                        <div class="detail-value">{{ employee.date_joined_company|date:"M d, Y" }}</div>
+                    </div>
+                    {% if employee.assigned_area %}
+                    <div class="info-item">
+                        <div class="detail-label">Assigned Area</div>
+                        <div class="detail-value">{{ employee.assigned_area }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-person-x"></i></div>
+            <h5>Profile Not Linked</h5>
+            <p>Your account is not linked to an employee profile. Contact your administrator.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

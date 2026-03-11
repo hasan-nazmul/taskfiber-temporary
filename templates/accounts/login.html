@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Sign In - TaskFiber{% endblock %}
+
+{% block content_noauth %}
+<div class="login-wrapper">
+    <div class="login-card card">
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <div class="login-logo">
+                    <i class="bi bi-router"></i>
+                </div>
+                <h4 class="mb-1 fw-bold">Welcome back</h4>
+                <p class="text-muted">Sign in to TaskFiber ISP Manager</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-telephone"></i>
+                        </span>
+                        <input type="tel" name="username" class="form-control"
+                               placeholder="Enter your phone number" required autofocus
+                               value="{{ form.username.value|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-lock"></i>
+                        </span>
+                        <input type="password" name="password" class="form-control"
+                               placeholder="Enter your password" required id="loginPassword">
+                        <button class="btn btn-outline-secondary toggle-password" type="button"
+                                data-target="loginPassword"
+                                style="border-color: rgba(255,255,255,0.1); color: #64748b;">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                </button>
+            </form>
+
+            <div class="text-center mt-4">
+                <small style="color: #475569;">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Authorized personnel only
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

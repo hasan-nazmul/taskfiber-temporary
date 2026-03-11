@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - TaskFiber{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>Dashboard</h4>
+        <div class="subtitle">
+            <i class="bi bi-calendar3 me-1"></i>{% now "l, F d, Y" %}
+        </div>
+    </div>
+    <div class="header-actions">
+        {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+        <a href="{% url 'ticket_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> New Ticket
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card stat-card stat-card-cyan">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-inbox-fill"></i></div>
+                <div class="stat-value">{{ ticket_stats.open }}</div>
+                <div class="stat-label">Open</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card stat-card stat-card-yellow">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="stat-value">{{ ticket_stats.assigned }}</div>
+                <div class="stat-label">Assigned</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card stat-card stat-card-blue">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-gear-fill"></i></div>
+                <div class="stat-value">{{ ticket_stats.in_progress }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card stat-card stat-card-green">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="stat-value">{{ ticket_stats.resolved_today }}</div>
+                <div class="stat-label">Resolved Today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card stat-card stat-card-purple">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-plus-circle-fill"></i></div>
+                <div class="stat-value">{{ ticket_stats.new_today }}</div>
+                <div class="stat-label">New Today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card stat-card stat-card-red">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="stat-value">{{ ticket_stats.total_open }}</div>
+                <div class="stat-label">Total Pending</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Tickets -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-ticket-detailed me-2 text-primary"></i>Recent Tickets</h6>
+                <a href="{% url 'ticket_list' %}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Type</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in recent_tickets %}
+                            <tr data-href="{% url 'ticket_detail' ticket.pk %}">
+                                <td>
+                                    <a href="{% url 'ticket_detail' ticket.pk %}" class="fw-semibold">
+                                        {{ ticket.ticket_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-type-{{ ticket.ticket_type }}">
+                                        {{ ticket.get_ticket_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if ticket.customer %}
+                                        {{ ticket.customer.name }}
+                                    {% elif ticket.contact_name %}
+                                        {{ ticket.contact_name }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-status-{{ ticket.status }}">
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-priority-{{ ticket.priority }}">
+                                        {{ ticket.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td><small class="text-muted">{{ ticket.created_at|timesince }} ago</small></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
+                                        <h5>No tickets yet</h5>
+                                        <p>Create your first ticket to get started</p>
+                                        <a href="{% url 'ticket_create' %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-lg me-1"></i>Create Ticket
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Tickets -->
+        {% if my_tickets %}
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-person-lines-fill me-2 text-success"></i>My Active Tickets</h6>
+                <a href="{% url 'my_tickets' %}" class="btn btn-sm btn-outline-success">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Type</th>
+                                <th>Customer</th>
+                                <th>Priority</th>
+                                <th>Scheduled</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in my_tickets %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'ticket_detail' ticket.pk %}" class="fw-semibold">
+                                        {{ ticket.ticket_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-type-{{ ticket.ticket_type }}">
+                                        {{ ticket.get_ticket_type_display }}
+                                    </span>
+                                </td>
+                                <td>{{ ticket.customer.name|default:ticket.contact_name|default:"—" }}</td>
+                                <td>
+                                    <span class="badge badge-priority-{{ ticket.priority }}">
+                                        {{ ticket.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if ticket.scheduled_date %}
+                                        <small><i class="bi bi-calendar me-1"></i>{{ ticket.scheduled_date|date:"M d" }}</small>
+                                    {% else %}
+                                        <small class="text-muted">—</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-action btn-outline-primary">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Low Stock -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Low Stock</h6>
+                <a href="{% url 'stock_list' %}?low_stock=1" class="btn btn-xs btn-outline-warning">View All</a>
+            </div>
+            <div class="card-body">
+                {% for item in low_stock_items %}
+                <div class="d-flex justify-content-between align-items-center
+                    {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                    <div>
+                        <div class="fw-semibold" style="font-size:0.835rem;">{{ item.name }}</div>
+                        <small class="text-muted">{{ item.category.name }}</small>
+                    </div>
+                    <div class="text-end">
+                        {% if item.quantity_in_stock == 0 %}
+                            <span class="badge bg-danger">Out</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">{{ item.quantity_in_stock }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-2">
+                    <i class="bi bi-check-circle text-success d-block mb-2" style="font-size:1.4rem;"></i>
+                    <small class="text-muted">Stock levels healthy</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Unassigned -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-person-x me-2 text-danger"></i>Unassigned</h6>
+                <a href="{% url 'ticket_list' %}?status=open" class="btn btn-xs btn-outline-danger">View All</a>
+            </div>
+            <div class="card-body">
+                {% for ticket in unassigned_tickets %}
+                <div class="d-flex justify-content-between align-items-center
+                    {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                    <div>
+                        <a href="{% url 'ticket_detail' ticket.pk %}" class="fw-semibold" style="font-size:0.835rem;">
+                            {{ ticket.ticket_number }}
+                        </a>
+                        <div>
+                            <span class="badge badge-type-{{ ticket.ticket_type }}">
+                                {{ ticket.get_ticket_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <span class="badge badge-priority-{{ ticket.priority }}">
+                        {{ ticket.get_priority_display }}
+                    </span>
+                </div>
+                {% empty %}
+                <div class="text-center py-2">
+                    <i class="bi bi-check-circle text-success d-block mb-2" style="font-size:1.4rem;"></i>
+                    <small class="text-muted">All tickets assigned!</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

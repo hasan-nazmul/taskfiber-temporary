@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}My Tickets - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>My Tickets</h4>
+        <div class="subtitle">{{ tickets.count }} tickets assigned to you</div>
+    </div>
+    <div class="header-actions">
+        <form method="get">
+            <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+                <option value="">Active Tickets</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for ticket in tickets %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card ticket-card priority-{{ ticket.priority }}">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <a href="{% url 'ticket_detail' ticket.pk %}" class="fw-bold" style="font-size:0.85rem;">
+                    {{ ticket.ticket_number }}
+                </a>
+                <span class="badge badge-priority-{{ ticket.priority }}">
+                    {{ ticket.get_priority_display }}
+                </span>
+            </div>
+            <div class="card-body py-3">
+                <div class="d-flex gap-2 mb-2">
+                    <span class="badge badge-type-{{ ticket.ticket_type }}">
+                        {{ ticket.get_ticket_type_display }}
+                    </span>
+                    <span class="badge badge-status-{{ ticket.status }}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="fw-semibold mb-2" style="font-size:0.88rem;">
+                    {{ ticket.title|truncatewords:8 }}
+                </div>
+
+                {% if ticket.customer %}
+                <div class="mb-2" style="font-size:0.82rem; color:var(--text-secondary);">
+                    <div><i class="bi bi-person me-1"></i>{{ ticket.customer.name }}</div>
+                    <div><i class="bi bi-telephone me-1"></i>{{ ticket.customer.phone }}</div>
+                    <div><i class="bi bi-geo-alt me-1"></i>{{ ticket.customer.area.name }}</div>
+                </div>
+                {% elif ticket.contact_name %}
+                <div class="mb-2" style="font-size:0.82rem; color:var(--text-secondary);">
+                    <div><i class="bi bi-person me-1"></i>{{ ticket.contact_name }}</div>
+                    <div><i class="bi bi-telephone me-1"></i>{{ ticket.contact_phone }}</div>
+                </div>
+                {% endif %}
+
+                {% if ticket.scheduled_date %}
+                <div class="mt-2 py-1 px-2 rounded d-inline-block" style="background:var(--blue-light); font-size:0.78rem;">
+                    <i class="bi bi-calendar me-1 text-primary"></i>
+                    {{ ticket.scheduled_date|date:"M d" }}
+                    {% if ticket.scheduled_time_slot %} · {{ ticket.scheduled_time_slot }}{% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center py-2">
+                <small class="text-muted">{{ ticket.created_at|timesince }} ago</small>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-xs btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i>View
+                    </a>
+                    {% if ticket.status != 'resolved' and ticket.status != 'closed' %}
+                    {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+                    <form method="post" action="{% url 'ticket_quick_resolve' ticket.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="resolution_notes" value="Resolved on site">
+                        <button type="submit" class="btn btn-xs btn-success"
+                                data-confirm="Mark this ticket as resolved?">
+                            <i class="bi bi-check-circle me-1"></i>Resolve
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="bi bi-check-circle"></i></div>
+                    <h5>All caught up!</h5>
+                    <p>No tickets assigned to you right now</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

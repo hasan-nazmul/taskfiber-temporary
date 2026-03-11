@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - TaskFiber</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0c111d; color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 20%, rgba(99,102,241,0.06), transparent 70%); pointer-events: none; }
+        .container { text-align: center; padding: 40px; position: relative; }
+        .code { font-size: 8rem; font-weight: 900; background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: .25; line-height: 1; letter-spacing: -4px; }
+        h3 { margin-top: 16px; font-weight: 700; font-size: 1.5rem; }
+        p { color: #94a3b8; margin: 12px auto 28px; max-width: 380px; font-size: .9rem; line-height: 1.6; }
+        .actions { display: flex; gap: 12px; justify-content: center; }
+        a { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: .85rem; text-decoration: none; transition: all .2s ease; }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: #94a3b8; border: 1px solid #1e293b; }
+        .btn-outline:hover { border-color: #6366f1; color: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="code">404</div>
+        <h3>Page Not Found</h3>
+        <p>The page you're looking for doesn't exist or has been moved.</p>
+        <div class="actions">
+            <a href="/" class="btn-primary"><i class="bi bi-house"></i> Dashboard</a>
+            <a href="javascript:history.back()" class="btn-outline"><i class="bi bi-arrow-left"></i> Go Back</a>
+        </div>
+    </div>
+</body>
+</html>

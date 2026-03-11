@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Review Leave Request - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="mb-0">Review Leave Request</h4>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <!-- Leave Details -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">Leave Details</h6></div>
+            <div class="card-body">
+                <p><strong>Employee:</strong> {{ leave.employee.full_name }} ({{ leave.employee.employee_id }})</p>
+                <p><strong>Type:</strong> {{ leave.get_leave_type_display }}</p>
+                <p><strong>From:</strong> {{ leave.start_date|date:"M d, Y" }}</p>
+                <p><strong>To:</strong> {{ leave.end_date|date:"M d, Y" }}</p>
+                <p><strong>Total Days:</strong> <span class="badge bg-primary">{{ leave.total_days }}</span></p>
+                <p><strong>Reason:</strong></p>
+                <p class="bg-light p-2 rounded">{{ leave.reason }}</p>
+                <p><strong>Submitted:</strong> {{ leave.created_at|date:"M d, Y h:i A" }}</p>
+            </div>
+        </div>
+
+        <!-- Approval Form -->
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Decision</h6></div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Submit Decision
+                        </button>
+                        <a href="{% url 'leave_request_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

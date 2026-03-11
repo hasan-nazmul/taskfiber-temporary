@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Permissions: {{ employee.full_name }} - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4>Module Access & Permissions</h4>
+    <div class="subtitle">Set specific module logic access for {{ employee.full_name }} ({{ employee.employee_id }})</div>
+</div>
+
+<div class="row align-items-start">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-shield-shaded text-success me-2"></i>Access Checklist</h6>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="card-body">
+                    <p class="text-muted small mb-4">
+                        Adjusting these settings overrides default departmental powers. 
+                        <strong>View Only</strong> prevents the user from making any POST requests or saving modifications.
+                    </p>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Tickets Access</label>
+                            {{ form.tickets_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customers Access</label>
+                            {{ form.customers_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Zones Access</label>
+                            {{ form.zones_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock / Inventory Access</label>
+                            {{ form.stock_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Schedule & Attendance Access</label>
+                            {{ form.schedule_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Employees / HR Access</label>
+                            {{ form.employees_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teams / Groups Access</label>
+                            {{ form.teams_access }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Accounts / Finance Access</label>
+                            {{ form.accounts_finance_access }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-light d-flex justify-content-end gap-2 p-3">
+                    <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i> Save Access</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Info Panel -->
+    <div class="col-lg-4">
+        <div class="card bg-light border-0">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary me-2"></i>Permission Definitions</h6>
+                <div class="small text-muted mb-3">
+                    <strong>No Access:</strong> The module will not appear in the sidebar and any direct URLs will be blocked.
+                </div>
+                <div class="small text-muted mb-3">
+                    <strong>View Only:</strong> Allows reading data (tables/dashboards) but blocks any creation or editing actions. Useful for field technicians checking stock availability.
+                </div>
+                <div class="small text-muted mb-3">
+                    <strong>View & Edit:</strong> Standard operational capability. Can create and modify data related to their job profile.
+                </div>
+                <div class="small text-muted">
+                    <strong>Full Access:</strong> Reserved for management. Allows deleting records and accessing underlying configurations.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

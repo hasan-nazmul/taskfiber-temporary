@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Stock Transactions - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>Stock Transactions</h4>
+        <div class="subtitle">All stock movements</div>
+    </div>
+    <a href="{% url 'stock_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Inventory
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label form-label-sm">Search</label>
+            <input type="text" name="search" class="form-control form-control-sm"
+                   placeholder="Item, Vendor, Invoice..."
+                   value="{{ filters.search }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label form-label-sm">Type</label>
+            <select name="type" class="form-select form-select-sm">
+                <option value="">All</option>
+                {% for val, label in type_choices %}
+                <option value="{{ val }}" {% if filters.type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label form-label-sm">From</label>
+            <input type="date" name="date_from" class="form-control form-control-sm"
+                   value="{{ filters.date_from }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label form-label-sm">To</label>
+            <input type="date" name="date_to" class="form-control form-control-sm"
+                   value="{{ filters.date_to }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search me-1"></i>Filter
+            </button>
+            <a href="{% url 'stock_transactions' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                        <th>Details</th>
+                        <th>By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                    <tr>
+                        <td>
+                            <small>{{ txn.created_at|date:"M d, Y h:i A" }}</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'stock_item_detail' txn.stock_item.pk %}">
+                                {{ txn.stock_item.name }}
+                            </a>
+                            <br><small class="text-muted">{{ txn.stock_item.sku }}</small>
+                        </td>
+                        <td>
+                            {% if txn.transaction_type == 'purchase' %}
+                                <span class="badge bg-success">Purchase</span>
+                            {% elif txn.transaction_type == 'issue' %}
+                                <span class="badge bg-warning text-dark">Issued</span>
+                            {% elif txn.transaction_type == 'used' %}
+                                <span class="badge bg-primary">Used</span>
+                            {% elif txn.transaction_type == 'return' %}
+                                <span class="badge bg-info">Return</span>
+                            {% elif txn.transaction_type == 'damaged' %}
+                                <span class="badge bg-danger">Damaged</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Adjustment</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if txn.quantity > 0 %}
+                                <span class="text-success fw-bold">+{{ txn.quantity }}</span>
+                            {% else %}
+                                <span class="text-danger fw-bold">{{ txn.quantity }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>
+                                {% if txn.issued_to %}To: {{ txn.issued_to.full_name }}<br>{% endif %}
+                                {% if txn.ticket %}
+                                    Ticket: <a href="{% url 'ticket_detail' txn.ticket.pk %}">
+                                        {{ txn.ticket.ticket_number }}</a><br>
+                                {% endif %}
+                                {% if txn.vendor_name %}Vendor: {{ txn.vendor_name }}<br>{% endif %}
+                                {% if txn.notes %}{{ txn.notes|truncatewords:8 }}{% endif %}
+                            </small>
+                        </td>
+                        <td><small>{{ txn.performed_by.full_name }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No transactions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

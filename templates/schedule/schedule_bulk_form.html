@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ title }} - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4>{{ title }}</h4>
+    <div class="subtitle">Assign the same shift to multiple employees</div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-4">{{ form.date|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.shift|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.assigned_area|as_crispy_field }}</div>
+                    </div>
+
+                    <h6 class="mt-3 mb-2">Select Employees:</h6>
+                    <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                        {{ form.employees|as_crispy_field }}
+                    </div>
+
+                    {{ form.notes|as_crispy_field }}
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-1"></i>Assign All
+                        </button>
+                        <a href="{% url 'schedule_view' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Employees - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>Employees</h4>
+        <div class="subtitle">{{ employees.count }} team members</div>
+    </div>
+    <div class="header-actions">
+        {% if user_access.employees in 'edit,full' or has_admin_privileges %}
+        <a href="{% url 'employee_create' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add Employee
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3 col-6">
+            <label class="form-label">Search</label>
+            <input type="text" name="search" class="form-control form-control-sm"
+                   placeholder="Name, ID, Phone..." value="{{ filters.search|default:'' }}">
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="form-label">Department</label>
+            <select name="department" class="form-select form-select-sm">
+                <option value="">All</option>
+                <option value="management" {% if filters.department == 'management' %}selected{% endif %}>Management</option>
+                <option value="marketing" {% if filters.department == 'marketing' %}selected{% endif %}>Marketing</option>
+                <option value="support" {% if filters.department == 'support' %}selected{% endif %}>Support</option>
+                <option value="technical" {% if filters.department == 'technical' %}selected{% endif %}>Technical</option>
+                <option value="accounts" {% if filters.department == 'accounts' %}selected{% endif %}>Accounts</option>
+            </select>
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-select form-select-sm">
+                <option value="">All</option>
+                {% for r in roles %}
+                <option value="{{ r.slug }}" {% if filters.role == r.slug %}selected{% endif %}>{{ r.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">All</option>
+                <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-3 col-12">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+                <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Employee Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr data-href="{% url 'employee_detail' emp.pk %}">
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar-gradient avatar-sm">
+                                    {{ emp.user.first_name.0 }}{{ emp.user.last_name.0 }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'employee_detail' emp.pk %}" class="fw-semibold">
+                                        {{ emp.full_name }}
+                                    </a>
+                                    <div class="text-muted" style="font-size:0.75rem;">{{ emp.employee_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ emp.role.name }}</td>
+                        <td>{{ emp.get_department_display }}</td>
+                        <td>
+                            <span style="font-size:0.835rem;">{{ emp.phone }}</span>
+                            {% if emp.whatsapp_number %}
+                            <br><small class="text-success"><i class="bi bi-whatsapp"></i> {{ emp.whatsapp_number }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.is_active %}
+                                <span class="badge" style="background:#dcfce7; color:#15803d;">Active</span>
+                            {% else %}
+                                <span class="badge" style="background:#fee2e2; color:#dc2626;">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'employee_detail' emp.pk %}"
+                                   class="btn btn-action btn-outline-primary"
+                                   data-bs-toggle="tooltip" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if user_access.employees in 'edit,full' or has_admin_privileges %}
+                                <a href="{% url 'employee_edit' emp.pk %}"
+                                   class="btn btn-action btn-outline-secondary"
+                                   data-bs-toggle="tooltip" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i class="bi bi-person-badge"></i></div>
+                                <h5>No employees found</h5>
+                                <p>Add your first team member</p>
+                                {% if user_access.employees in 'edit,full' or has_admin_privileges %}
+                                <a href="{% url 'employee_create' %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-person-plus me-1"></i>Add Employee
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ title }} - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>{{ title }}</h4>
+        <div class="subtitle">
+            {% if employee %}Edit employee details{% else %}Add a new team member{% endif %}
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="bi bi-person me-2 text-primary"></i>User Account</h6>
+                </div>
+                <div class="card-body">
+                    {{ user_form|crispy }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="bi bi-person-badge me-2 text-success"></i>Employee Details</h6>
+                </div>
+                <div class="card-body">
+                    {{ emp_form|crispy }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>
+            {% if employee %}Update Employee{% else %}Create Employee{% endif %}
+        </button>
+        <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

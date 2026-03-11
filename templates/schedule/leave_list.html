@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Leave Requests - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>{% if is_hr %}Leave Requests{% else %}My Leave Requests{% endif %}</h4>
+    </div>
+    <div class="d-flex gap-2">
+        {% if is_hr %}
+        <form method="get" class="d-flex gap-2">
+            <select name="status" class="form-select form-select-sm" style="width: auto;"
+                    onchange="this.form.submit()">
+                <option value="">All</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+        <a href="{% url 'leave_request_create' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>New Request
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leaves %}
+                    <tr>
+                        <td>
+                            <strong>{{ leave.employee.full_name }}</strong>
+                            <br><small class="text-muted">{{ leave.employee.employee_id }}</small>
+                        </td>
+                        <td>{{ leave.get_leave_type_display }}</td>
+                        <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                        <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                        <td><span class="badge bg-secondary">{{ leave.total_days }}</span></td>
+                        <td>{{ leave.reason|truncatewords:8 }}</td>
+                        <td>
+                            {% if leave.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif leave.status == 'approved' %}
+                                <span class="badge bg-success">Approved</span>
+                            {% else %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if leave.status == 'pending' %}
+                            {% if is_hr %}
+                            <a href="{% url 'leave_request_approve' leave.pk %}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-check-circle"></i> Review
+                            </a>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Awaiting Review</span>
+                            {% endif %}
+                            {% else %}
+                            <small class="text-muted">
+                                {% if leave.approved_by %}
+                                    By {{ leave.approved_by.full_name }}
+                                {% endif %}
+                            </small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No leave requests</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

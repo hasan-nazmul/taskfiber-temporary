@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.full_name }} - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+        <div class="avatar-gradient avatar-md">
+            {{ employee.user.first_name.0 }}{{ employee.user.last_name.0 }}
+        </div>
+        <div>
+            <h4>{{ employee.full_name }}</h4>
+            <div class="subtitle">{{ employee.employee_id }} · {{ employee.role.name }}</div>
+        </div>
+    </div>
+    <div class="header-actions">
+        {% if has_admin_privileges %}
+        <a href="{% url 'employee_module_access' employee.pk %}" class="btn btn-outline-success">
+            <i class="bi bi-shield-lock"></i> Permissions
+        </a>
+        {% endif %}
+        {% if user_access.employees in 'edit,full' or has_admin_privileges or request.user.employee.pk == employee.pk %}
+        <a href="{% url 'employee_edit' employee.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        {% endif %}
+        <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <!-- Profile Card -->
+        <div class="card mb-4">
+            <div class="card-body text-center py-4">
+                {% if employee.profile_photo %}
+                    <img src="{{ employee.profile_photo.url }}" class="rounded-circle mb-3"
+                         width="90" height="90" style="object-fit:cover;">
+                {% else %}
+                    <div class="avatar-gradient avatar-lg mx-auto mb-3">
+                        {{ employee.user.first_name.0 }}{{ employee.user.last_name.0 }}
+                    </div>
+                {% endif %}
+                <h5 class="fw-bold mb-1">{{ employee.full_name }}</h5>
+                <div class="text-muted mb-3">{{ employee.get_department_display }}</div>
+                <div class="d-flex justify-content-center gap-2">
+                    <span class="badge" style="background:var(--blue-light); color:var(--blue);">{{ employee.role.name }}</span>
+                    {% if employee.is_active %}
+                        <span class="badge" style="background:var(--green-light); color:var(--green);">Active</span>
+                    {% else %}
+                        <span class="badge" style="background:var(--red-light); color:var(--red);">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="card mb-4">
+            <div class="card-header"><h6>Contact</h6></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value"><i class="bi bi-telephone me-2 text-muted"></i>{{ employee.phone }}</div>
+                </div>
+                {% if employee.whatsapp_number %}
+                <div class="mb-3">
+                    <div class="detail-label">WhatsApp</div>
+                    <div class="detail-value">
+                        <a href="https://wa.me/{{ employee.whatsapp_number }}" target="_blank" rel="noopener" class="text-success">
+                            <i class="bi bi-whatsapp me-2"></i>{{ employee.whatsapp_number }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value"><i class="bi bi-envelope me-2 text-muted"></i>{{ employee.user.email|default:"—" }}</div>
+                </div>
+                {% if employee.address %}
+                <div>
+                    <div class="detail-label">Address</div>
+                    <div class="detail-value"><i class="bi bi-geo-alt me-2 text-muted"></i>{{ employee.address }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Work Details -->
+        <div class="card">
+            <div class="card-header"><h6>Work Details</h6></div>
+            <div class="card-body">
+                <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="info-item">
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value">{{ employee.get_department_display }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Joined</div>
+                        <div class="detail-value">{{ employee.date_joined_company|date:"M d, Y" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Salary</div>
+                        <div class="detail-value">৳{{ employee.salary|floatformat:0 }}</div>
+                    </div>
+                    {% if employee.assigned_area %}
+                    <div class="info-item">
+                        <div class="detail-label">Area</div>
+                        <div class="detail-value">{{ employee.assigned_area }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Tickets -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6>
+                    <i class="bi bi-ticket-detailed me-2 text-primary"></i>Assigned Tickets
+                    {% if open_ticket_count %}
+                        <span class="badge bg-danger ms-1">{{ open_ticket_count }} active</span>
+                    {% endif %}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in assigned_tickets %}
+                            <tr data-href="{% url 'ticket_detail' ticket.pk %}">
+                                <td>
+                                    <a href="{% url 'ticket_detail' ticket.pk %}" class="fw-semibold">
+                                        {{ ticket.ticket_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-type-{{ ticket.ticket_type }}">
+                                        {{ ticket.get_ticket_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status-{{ ticket.status }}">
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-priority-{{ ticket.priority }}">
+                                        {{ ticket.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td><small class="text-muted">{{ ticket.created_at|date:"M d, Y" }}</small></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
+                                        <h5>No tickets assigned</h5>
+                                        <p>This employee has no ticket assignments yet</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

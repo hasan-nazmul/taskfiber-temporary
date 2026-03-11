@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Stock Inventory - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>Stock Inventory</h4>
+        <div class="subtitle">{{ items.count }} items</div>
+    </div>
+    <div>
+        <a href="{% url 'stock_category_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-tags me-1"></i>Categories
+        </a>
+        <a href="{% url 'stock_transactions' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-list-ul me-1"></i>Transactions
+        </a>
+        {% if user_access.stock in 'edit,full' or has_admin_privileges %}
+        <div class="btn-group btn-group-sm">
+            <a href="{% url 'stock_purchase' %}" class="btn btn-success">
+                <i class="bi bi-cart-plus me-1"></i>Purchase
+            </a>
+            <a href="{% url 'stock_issue' %}" class="btn btn-warning">
+                <i class="bi bi-box-arrow-right me-1"></i>Issue
+            </a>
+            <a href="{% url 'stock_return' %}" class="btn btn-info">
+                <i class="bi bi-box-arrow-in-left me-1"></i>Return
+            </a>
+        </div>
+        <a href="{% url 'stock_item_create' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Add Item
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card stat-card-blue">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
+                <div class="stat-value">{{ stats.total_items }}</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card stat-card-yellow">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="stat-value">{{ stats.low_stock_count }}</div>
+                <div class="stat-label">Low Stock</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card stat-card-red">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="stat-value">{{ stats.out_of_stock_count }}</div>
+                <div class="stat-label">Out of Stock</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card stat-card-green">
+            <div class="card-body">
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-value">৳{{ stats.total_value|floatformat:0 }}</div>
+                <div class="stat-label">Total Value</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label form-label-sm">Search</label>
+            <input type="text" name="search" class="form-control form-control-sm"
+                   placeholder="Name, SKU, Brand..."
+                   value="{{ filters.search }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label form-label-sm">Category</label>
+            <select name="category" class="form-select form-select-sm">
+                <option value="">All</option>
+                {% for cat in categories %}
+                <option value="{{ cat.pk }}" {% if filters.category == cat.pk|stringformat:"d" %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label form-label-sm">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">All</option>
+                <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="form-check mt-4">
+                <input type="checkbox" name="low_stock" value="1" class="form-check-input"
+                       id="low_stock" {% if filters.low_stock %}checked{% endif %}>
+                <label class="form-check-label" for="low_stock">Low Stock Only</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search me-1"></i>Filter
+            </button>
+            <a href="{% url 'stock_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+<!-- Items Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Stock</th>
+                        <th>Unit</th>
+                        <th>Buy Price</th>
+                        <th>Sell Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="{% if item.quantity_in_stock == 0 %}table-danger{% elif item.is_low_stock %}table-warning{% endif %}">
+                        <td><strong>{{ item.sku }}</strong></td>
+                        <td>
+                            <a href="{% url 'stock_item_detail' item.pk %}">
+                                {{ item.name }}
+                            </a>
+                            {% if item.brand %}
+                            <br><small class="text-muted">{{ item.brand }}
+                                {% if item.model_number %} · {{ item.model_number }}{% endif %}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.category.name }}</td>
+                        <td>
+                            {% if item.quantity_in_stock == 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif item.is_low_stock %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ item.quantity_in_stock }}
+                                    <i class="bi bi-exclamation-triangle ms-1"></i>
+                                </span>
+                            {% else %}
+                                <span class="fw-bold text-success">{{ item.quantity_in_stock }}</span>
+                            {% endif %}
+                            <small class="text-muted">(min: {{ item.minimum_stock_level }})</small>
+                        </td>
+                        <td>{{ item.get_unit_display }}</td>
+                        <td>৳{{ item.purchase_price }}</td>
+                        <td>৳{{ item.selling_price }}</td>
+                        <td>
+                            {% if item.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'stock_item_detail' item.pk %}"
+                                   class="btn btn-outline-primary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if user_access.stock in 'edit,full' or has_admin_privileges %}
+                                <a href="{% url 'stock_item_edit' item.pk %}"
+                                   class="btn btn-outline-warning" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                            <p class="mt-2">No stock items found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

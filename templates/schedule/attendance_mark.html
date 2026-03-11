@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Attendance - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>Mark Attendance</h4>
+        <div class="subtitle">{{ target_date|date:"l, M d, Y" }}</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="?date={{ prev_date }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-chevron-left"></i> Prev Day
+        </a>
+        <a href="?date={{ today }}" class="btn btn-outline-primary btn-sm">
+            Today
+        </a>
+        <a href="?date={{ next_date }}" class="btn btn-outline-secondary btn-sm">
+            Next Day <i class="bi bi-chevron-right"></i>
+        </a>
+        <a href="{% url 'attendance_report' %}" class="btn btn-info btn-sm">
+            <i class="bi bi-bar-chart me-1"></i>Monthly Report
+        </a>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employees %}
+                        {% with att=existing_attendance %}
+                        <tr>
+                            <td>
+                                <strong>{{ emp.full_name }}</strong>
+                                <br><small class="text-muted">{{ emp.employee_id }}</small>
+                            </td>
+                            <td>{{ emp.role.name }}</td>
+                            <td>
+                                <select name="status_{{ emp.id }}" class="form-select form-select-sm"
+                                        style="width: 130px;">
+                                    <option value="">-- Select --</option>
+                                    {% for val, label in status_choices %}
+                                    <option value="{{ val }}"
+                                        {% if emp.id in existing_attendance and existing_attendance|dictsort:"id" %}
+                                            {% for eid, a in existing_attendance.items %}
+                                                {% if eid == emp.id and a.status == val %}selected{% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    >{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="time" name="check_in_{{ emp.id }}"
+                                       class="form-control form-control-sm" style="width: 120px;"
+                                       value="{% for eid, a in existing_attendance.items %}{% if eid == emp.id %}{{ a.check_in|time:'H:i' }}{% endif %}{% endfor %}">
+                            </td>
+                            <td>
+                                <input type="time" name="check_out_{{ emp.id }}"
+                                       class="form-control form-control-sm" style="width: 120px;"
+                                       value="{% for eid, a in existing_attendance.items %}{% if eid == emp.id %}{{ a.check_out|time:'H:i' }}{% endif %}{% endfor %}">
+                            </td>
+                            <td>
+                                <input type="text" name="notes_{{ emp.id }}"
+                                       class="form-control form-control-sm" style="width: 150px;"
+                                       placeholder="Notes..."
+                                       value="{% for eid, a in existing_attendance.items %}{% if eid == emp.id %}{{ a.notes }}{% endif %}{% endfor %}">
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Save Attendance
+        </button>
+    </div>
+</form>
+{% endblock %}

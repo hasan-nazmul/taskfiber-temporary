@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ title }} - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="mb-0"><i class="bi {{ icon }} me-2"></i>{{ title }}</h4>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn {{ btn_class }}">
+                            <i class="bi bi-check-lg me-1"></i>{{ btn_text }}
+                        </button>
+                        <a href="{% url 'stock_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

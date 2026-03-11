@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }} - TaskFiber{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <h4>{{ customer.name }}</h4>
+        <div class="subtitle">{{ customer.customer_id }} · {{ customer.area.name }}</div>
+    </div>
+    <div class="header-actions">
+        {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+        <a href="{% url 'ticket_create' %}?customer={{ customer.pk }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> <span class="d-none d-md-inline">Create Ticket</span>
+        </a>
+        {% endif %}
+        {% if user_access.customers in 'edit,full' or has_admin_privileges %}
+        <a href="{% url 'customer_edit' customer.pk %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Edit</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> <span class="d-none d-md-inline">Back</span>
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <!-- Status -->
+        <div class="card mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-0">{{ customer.name }}</h5>
+                    <small class="text-muted">{{ customer.customer_id }}</small>
+                </div>
+                {% if customer.status == 'active' %}
+                    <span class="badge fs-6" style="background:var(--green-light); color:var(--green);">Active</span>
+                {% elif customer.status == 'suspended' %}
+                    <span class="badge fs-6" style="background:var(--red-light); color:var(--red);">Suspended</span>
+                {% elif customer.status == 'pending' %}
+                    <span class="badge fs-6" style="background:var(--yellow-light); color:var(--yellow-dark);">Pending</span>
+                {% else %}
+                    <span class="badge fs-6" style="background:#f3f4f6; color:#6b7280;">{{ customer.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="card mb-4">
+            <div class="card-header"><h6>Contact</h6></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value"><i class="bi bi-telephone me-2 text-muted"></i>{{ customer.phone }}</div>
+                </div>
+                {% if customer.whatsapp_number %}
+                <div class="mb-3">
+                    <div class="detail-label">WhatsApp</div>
+                    <div class="detail-value">
+                        <a href="https://wa.me/{{ customer.whatsapp_number }}" target="_blank" rel="noopener" class="text-success">
+                            <i class="bi bi-whatsapp me-2"></i>{{ customer.whatsapp_number }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <div class="detail-label">Address</div>
+                    <div class="detail-value">{{ customer.address }}</div>
+                </div>
+                <div>
+                    <div class="detail-label">Area</div>
+                    <div class="detail-value">{{ customer.area.name }} ({{ customer.area.zone_code }})</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing -->
+        <div class="card mb-4">
+            <div class="card-header"><h6>Billing</h6></div>
+            <div class="card-body">
+                <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="info-item">
+                        <div class="detail-label">Monthly</div>
+                        <div class="detail-value fw-bold">৳{{ customer.monthly_amount|floatformat:0 }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Due Amount</div>
+                        <div class="detail-value fw-bold {% if customer.due_amount > 0 %}text-danger{% else %}text-success{% endif %}">
+                            ৳{{ customer.due_amount|floatformat:0 }}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Billing Date</div>
+                        <div class="detail-value">{{ customer.billing_date }}th</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Last Payment</div>
+                        <div class="detail-value">{{ customer.last_payment_date|date:"M d, Y"|default:"—" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service -->
+        <div class="card">
+            <div class="card-header"><h6>Service Details</h6></div>
+            <div class="card-body">
+                <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="info-item">
+                        <div class="detail-label">Package</div>
+                        <div class="detail-value">{{ customer.package.name }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Bandwidth</div>
+                        <div class="detail-value">{{ customer.package.bandwidth_mbps }} Mbps</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Connection</div>
+                        <div class="detail-value">{{ customer.get_connection_type_display }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="detail-label">Connected</div>
+                        <div class="detail-value">{{ customer.connection_date|date:"M d, Y"|default:"—" }}</div>
+                    </div>
+                </div>
+                {% if customer.pppoe_username or customer.ip_address or customer.onu_serial %}
+                <hr>
+                <div class="info-grid" style="grid-template-columns: 1fr 1fr;">
+                    {% if customer.pppoe_username %}
+                    <div class="info-item">
+                        <div class="detail-label">PPPoE</div>
+                        <div class="detail-value"><code>{{ customer.pppoe_username }}</code></div>
+                    </div>
+                    {% endif %}
+                    {% if customer.ip_address %}
+                    <div class="info-item">
+                        <div class="detail-label">IP</div>
+                        <div class="detail-value"><code>{{ customer.ip_address }}</code></div>
+                    </div>
+                    {% endif %}
+                    {% if customer.mac_address %}
+                    <div class="info-item">
+                        <div class="detail-label">MAC</div>
+                        <div class="detail-value"><code>{{ customer.mac_address }}</code></div>
+                    </div>
+                    {% endif %}
+                    {% if customer.onu_serial %}
+                    <div class="info-item">
+                        <div class="detail-label">ONU Serial</div>
+                        <div class="detail-value"><code>{{ customer.onu_serial }}</code></div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6>
+                    <i class="bi bi-ticket-detailed me-2 text-primary"></i>Tickets
+                    {% if open_ticket_count %}
+                    <span class="badge bg-danger ms-1">{{ open_ticket_count }} active</span>
+                    {% endif %}
+                </h6>
+                {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+                <a href="{% url 'ticket_create' %}?customer={{ customer.pk }}" class="btn btn-xs btn-primary">
+                    <i class="bi bi-plus me-1"></i>New
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Assigned</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                            <tr data-href="{% url 'ticket_detail' ticket.pk %}">
+                                <td>
+                                    <a href="{% url 'ticket_detail' ticket.pk %}" class="fw-semibold">
+                                        {{ ticket.ticket_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-type-{{ ticket.ticket_type }}">
+                                        {{ ticket.get_ticket_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status-{{ ticket.status }}">
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ ticket.assigned_to.full_name|default:"—" }}</small>
+                                </td>
+                                <td><small class="text-muted">{{ ticket.created_at|date:"M d, Y" }}</small></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
+                                        <h5>No tickets</h5>
+                                        <p>No tickets recorded for this customer</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if customer.notes %}
+        <div class="card mt-4">
+            <div class="card-header"><h6>Notes</h6></div>
+            <div class="card-body">
+                <p style="font-size:0.85rem; color:var(--text-secondary);">{{ customer.notes|linebreaksbr }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
