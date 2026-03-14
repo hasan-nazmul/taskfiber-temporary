@@ -13,7 +13,7 @@
         </div>
     </div>
     <div class="header-actions">
-        {% if has_admin_privileges %}
+        {% if has_admin_privileges and not employee.user.is_superuser and employee.role.slug != 'owner' %}
         <a href="{% url 'employee_module_access' employee.pk %}" class="btn btn-outline-success">
             <i class="bi bi-shield-lock"></i> Permissions
         </a>

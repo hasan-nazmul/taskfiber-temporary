@@ -19,6 +19,9 @@
 
 <form method="post" id="ticket-form">
     {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
     <div class="row g-4">
         <!-- Left Column -->
         <div class="col-lg-8">

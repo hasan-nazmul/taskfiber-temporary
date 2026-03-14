@@ -8,6 +8,12 @@
         <div class="subtitle">{{ items.count }} items</div>
     </div>
     <div>
+        <a href="{% url 'stock_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm" title="Export CSV">
+            <i class="bi bi-filetype-csv"></i>
+        </a>
+        <a href="{% url 'stock_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm" title="Export PDF">
+            <i class="bi bi-filetype-pdf"></i>
+        </a>
         <a href="{% url 'stock_category_list' %}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-tags me-1"></i>Categories
         </a>
@@ -28,6 +34,9 @@
         </div>
         <a href="{% url 'stock_item_create' %}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-circle me-1"></i>Add Item
+        </a>
+        <a href="{% url 'stock_import_csv' %}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-upload me-1"></i>Import CSV
         </a>
         {% endif %}
     </div>

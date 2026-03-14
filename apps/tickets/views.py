@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -153,6 +153,84 @@ def ticket_list(request):
         'team_choices': Team.objects.all(),
     }
     return render(request, 'tickets/ticket_list.html', context)
+
+
+def _get_filtered_tickets(request):
+    """Shared filter logic for ticket list and export."""
+    tickets = Ticket.objects.select_related(
+        'customer', 'assigned_to', 'created_by', 'area'
+    ).all()
+    search = request.GET.get('search', '')
+    status = request.GET.get('status', '')
+    ticket_type = request.GET.get('ticket_type', '')
+    priority = request.GET.get('priority', '')
+    assigned_to = request.GET.get('assigned_to', '')
+    assigned_team = request.GET.get('assigned_team', '')
+    date_range = request.GET.get('date_range', '')
+    if search:
+        tickets = tickets.filter(
+            Q(ticket_number__icontains=search) | Q(title__icontains=search) |
+            Q(customer__name__icontains=search) | Q(customer__customer_id__icontains=search) |
+            Q(contact_name__icontains=search) | Q(contact_phone__icontains=search)
+        )
+    if status:
+        tickets = tickets.filter(status=status)
+    if ticket_type:
+        tickets = tickets.filter(ticket_type=ticket_type)
+    if priority:
+        tickets = tickets.filter(priority=priority)
+    if assigned_to:
+        if assigned_to == 'unassigned':
+            tickets = tickets.filter(assigned_to__isnull=True)
+        else:
+            tickets = tickets.filter(assigned_to_id=assigned_to)
+    if assigned_team:
+        tickets = tickets.filter(assigned_team=assigned_team)
+    today = timezone.now().date()
+    if date_range == 'today':
+        tickets = tickets.filter(created_at__date=today)
+    elif date_range == 'this_week':
+        start_of_week = today - timezone.timedelta(days=today.weekday())
+        tickets = tickets.filter(created_at__date__gte=start_of_week)
+    elif date_range == 'this_month':
+        tickets = tickets.filter(created_at__date__year=today.year, created_at__date__month=today.month)
+    return tickets
+
+
+@login_required
+@check_module_access('tickets', 'view')
+def ticket_export_csv(request):
+    from utils.export_helpers import csv_response
+    tickets = _get_filtered_tickets(request)
+    headers = ['Ticket #', 'Type', 'Customer', 'Priority', 'Status', 'Assigned To', 'Area', 'Created']
+    rows = [
+        [t.ticket_number, t.get_ticket_type_display(),
+         t.customer.name if t.customer else t.contact_name,
+         t.get_priority_display(), t.get_status_display(),
+         t.assigned_to.full_name if t.assigned_to else 'Unassigned',
+         t.area.name if t.area else '',
+         t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '']
+        for t in tickets
+    ]
+    return csv_response('tickets.csv', headers, rows)
+
+
+@login_required
+@check_module_access('tickets', 'view')
+def ticket_export_pdf(request):
+    from utils.export_helpers import pdf_response
+    tickets = _get_filtered_tickets(request)
+    headers = ['Ticket #', 'Type', 'Customer', 'Priority', 'Status', 'Assigned To', 'Area', 'Created']
+    rows = [
+        [t.ticket_number, t.get_ticket_type_display(),
+         t.customer.name if t.customer else t.contact_name,
+         t.get_priority_display(), t.get_status_display(),
+         t.assigned_to.full_name if t.assigned_to else 'Unassigned',
+         t.area.name if t.area else '',
+         t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '']
+        for t in tickets
+    ]
+    return pdf_response('tickets.pdf', 'Tickets Report', headers, rows, landscape_mode=True)
 
 
 @login_required
@@ -396,12 +474,16 @@ def ticket_detail(request, pk):
                 stock_usage.ticket = ticket
                 stock_usage.added_by = employee
 
-                # Reduce stock
+                # Reduce stock atomically
                 stock_item = stock_usage.stock_item
+                from apps.stock.models import StockItem as SI
                 if stock_item.quantity_in_stock >= stock_usage.quantity_used:
-                    stock_item.quantity_in_stock -= stock_usage.quantity_used
-                    stock_item.save()
-                    stock_usage.save()
+                    updated = SI.objects.filter(
+                        pk=stock_item.pk, quantity_in_stock__gte=stock_usage.quantity_used
+                    ).update(quantity_in_stock=F('quantity_in_stock') - stock_usage.quantity_used)
+                    if updated:
+                        stock_item.refresh_from_db()
+                        stock_usage.save()
 
                     # Create stock transaction
                     from apps.stock.models import StockTransaction
@@ -472,11 +554,14 @@ def ticket_detail(request, pk):
 def ticket_edit(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
     employee = get_employee(request)
+    if not employee:
+        messages.error(request, 'Your account is not linked to an employee profile.')
+        return redirect('ticket_list')
 
     if request.method == 'POST':
         form = TicketEditForm(request.POST, instance=ticket)
         if form.is_valid():
-            old_status = Ticket.objects.get(pk=pk).status
+            old_status = ticket.status
             updated_ticket = form.save(commit=False)
 
             # Prevent manual "assigned" status without an assignee
@@ -567,7 +652,7 @@ def ticket_quick_resolve(request, pk):
 
     if ticket.status in ('resolved', 'closed', 'cancelled'):
         messages.warning(request, f'Ticket {ticket.ticket_number} is already {ticket.get_status_display()}.')
-        return redirect(request.META.get('HTTP_REFERER', 'ticket_list'))
+        return redirect('ticket_list')
 
     try:
         old_status = ticket.status
@@ -589,7 +674,7 @@ def ticket_quick_resolve(request, pk):
         logger.error(f'Quick resolve failed for ticket {pk}: {e}')
         messages.error(request, 'Failed to resolve ticket. Please try again.')
 
-    return redirect(request.META.get('HTTP_REFERER', 'ticket_list'))
+    return redirect(request.META.get('HTTP_REFERER', '') if request.META.get('HTTP_REFERER', '').startswith('/') else 'ticket_list')
 
 
 @login_required
@@ -623,3 +708,97 @@ def customer_search_api(request):
         results = []
 
     return JsonResponse({'results': results})
+
+
+TICKET_IMPORT_HEADERS = ['Type', 'Source', 'Contact Name', 'Contact Phone', 'Contact Address', 'Title', 'Description', 'Priority']
+
+
+@login_required
+@check_module_access('tickets', 'edit')
+def ticket_import_template(request):
+    from utils.import_helpers import sample_csv_response
+    return sample_csv_response('ticket_import_template.csv', TICKET_IMPORT_HEADERS)
+
+
+@login_required
+@check_module_access('tickets', 'edit')
+def ticket_import_csv(request):
+    from utils.import_helpers import parse_csv
+    from django.db import transaction
+
+    employee = get_employee(request)
+    if not employee:
+        messages.error(request, 'Your account is not linked to an employee profile.')
+        return redirect('ticket_list')
+
+    context = {
+        'module_name': 'Tickets',
+        'back_url': '/tickets/',
+        'template_url': '/tickets/import/template/',
+        'expected_columns': TICKET_IMPORT_HEADERS,
+    }
+
+    valid_types = dict(Ticket.TICKET_TYPE_CHOICES)
+    valid_sources = dict(Ticket.SOURCE_CHOICES)
+    valid_priorities = dict(Ticket.PRIORITY_CHOICES)
+
+    if request.method == 'POST':
+        csv_file = request.FILES.get('csv_file')
+        if not csv_file or not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Please upload a valid CSV file.')
+            return render(request, 'common/csv_import.html', context)
+
+        headers, rows = parse_csv(csv_file)
+        created = 0
+        errors = []
+
+        for i, row in enumerate(rows, start=2):
+            try:
+                ticket_type = row.get('Type', '').strip().lower().replace(' ', '_')
+                if ticket_type not in valid_types:
+                    errors.append({'row': i, 'message': f'Invalid type "{row.get("Type", "")}"'})
+                    continue
+
+                source = row.get('Source', 'phone').strip().lower().replace(' ', '_').replace('-', '_')
+                if source not in valid_sources:
+                    source = 'phone'
+
+                priority = row.get('Priority', 'medium').strip().lower()
+                if priority not in valid_priorities:
+                    priority = 'medium'
+
+                contact_name = row.get('Contact Name', '').strip()
+                title = row.get('Title', '').strip()
+                if not title and not contact_name:
+                    errors.append({'row': i, 'message': 'Title or Contact Name is required'})
+                    continue
+
+                with transaction.atomic():
+                    ticket = Ticket(
+                        ticket_type=ticket_type,
+                        source=source,
+                        created_by=employee,
+                        contact_name=contact_name,
+                        contact_phone=row.get('Contact Phone', '').strip(),
+                        contact_address=row.get('Contact Address', '').strip(),
+                        title=title or f"{valid_types[ticket_type]} - {contact_name}",
+                        description=row.get('Description', '').strip(),
+                        priority=priority,
+                        status='open',
+                    )
+                    ticket.save()
+
+                    TicketStatusLog.objects.create(
+                        ticket=ticket,
+                        old_status='',
+                        new_status='open',
+                        changed_by=employee,
+                        notes='Imported from CSV',
+                    )
+                    created += 1
+            except Exception as e:
+                errors.append({'row': i, 'message': str(e)})
+
+        context['results'] = {'created': created, 'skipped': 0, 'errors': errors}
+
+    return render(request, 'common/csv_import.html', context)

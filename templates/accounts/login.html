@@ -16,6 +16,12 @@
             <form method="post">
                 {% csrf_token %}
 
+                {% if form.errors %}
+                <div class="alert alert-danger py-2 mb-3">
+                    <small><i class="bi bi-exclamation-circle me-1"></i>Invalid phone number or password.</small>
+                </div>
+                {% endif %}
+
                 <div class="mb-3">
                     <label class="form-label">Phone Number</label>
                     <div class="input-group">

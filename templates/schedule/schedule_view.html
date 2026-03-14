@@ -26,7 +26,16 @@
         <a href="{% url 'schedule_bulk_assign' %}" class="btn btn-success btn-sm">
             <i class="bi bi-people me-1"></i>Bulk Assign
         </a>
+        <a href="{% url 'schedule_import_csv' %}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-upload me-1"></i>Import CSV
+        </a>
         {% endif %}
+        <a href="{% url 'schedule_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm" title="Export CSV">
+            <i class="bi bi-filetype-csv"></i>
+        </a>
+        <a href="{% url 'schedule_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm" title="Export PDF">
+            <i class="bi bi-filetype-pdf"></i>
+        </a>
     </div>
 </div>
 
@@ -37,75 +46,80 @@
                 <thead class="table-light">
                     <tr>
                         <th style="min-width: 160px;">Employee</th>
-                        {% for i in "0123456" %}
-                        <th class="text-center {% if week_dates|slice:i|last == today %}table-primary{% endif %}"
+                        {% for h in week_headers %}
+                        <th class="text-center {% if h.date == today %}table-primary{% endif %}"
                             style="min-width: 120px;">
-                            {{ day_names|slice:i|last }}
+                            {{ h.name }}
                             <br>
-                            <small>{{ week_dates|slice:i|last|date:"M d" }}</small>
+                            <small>{{ h.date|date:"M d" }}</small>
                         </th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for emp in employees %}
+                    {% for row in schedule_rows %}
                     <tr>
                         <td>
-                            <a href="{% url 'employee_detail' emp.pk %}">
-                                <strong>{{ emp.full_name }}</strong>
+                            <a href="{% url 'employee_detail' row.employee.pk %}">
+                                <strong>{{ row.employee.full_name }}</strong>
                             </a>
                             <br>
-                            <small class="text-muted">{{ emp.role.name }}</small>
+                            <small class="text-muted">{{ row.employee.role.name }}</small>
                         </td>
-                        {% for d in week_dates %}
-                        {% with sch=schedule_matrix|default_if_none:"" %}
-                        <td class="text-center p-1 {% if d == today %}table-primary{% endif %}">
-                            {% for emp_id, dates in schedule_matrix.items %}
-                                {% if emp_id == emp.id %}
-                                    {% for sdate, schedule in dates.items %}
-                                        {% if sdate == d %}
-                                            {% if schedule %}
-                                                {% if schedule.shift == 'morning' %}
-                                                    <span class="badge bg-info text-dark d-block mb-1">
-                                                        <i class="bi bi-sunrise"></i> Morning
-                                                    </span>
-                                                {% elif schedule.shift == 'evening' %}
-                                                    <span class="badge bg-warning text-dark d-block mb-1">
-                                                        <i class="bi bi-sunset"></i> Evening
-                                                    </span>
-                                                {% elif schedule.shift == 'night' %}
-                                                    <span class="badge bg-dark d-block mb-1">
-                                                        <i class="bi bi-moon"></i> Night
-                                                    </span>
-                                                {% elif schedule.shift == 'full_day' %}
-                                                    <span class="badge bg-primary d-block mb-1">
-                                                        <i class="bi bi-sun"></i> Full Day
-                                                    </span>
-                                                {% elif schedule.shift == 'off' %}
-                                                    <span class="badge bg-secondary d-block mb-1">
-                                                        <i class="bi bi-x-circle"></i> Off
-                                                    </span>
-                                                {% endif %}
-                                                {% if schedule.assigned_area %}
-                                                    <small class="text-muted d-block">
-                                                        {{ schedule.assigned_area.name }}
-                                                    </small>
-                                                {% endif %}
-                                            {% else %}
-                                                {% if user_access.schedule in 'edit,full' or has_admin_privileges %}
-                                                <a href="{% url 'schedule_assign' %}?employee={{ emp.id }}&date={{ d|date:'Y-m-d' }}"
-                                                   class="btn btn-sm btn-outline-light text-muted"
-                                                   title="Assign schedule">
-                                                    <i class="bi bi-plus"></i>
-                                                </a>
-                                                {% endif %}
-                                            {% endif %}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-                            {% endfor %}
+                        {% for day in row.days %}
+                        <td class="text-center p-1 schedule-cell {% if day.date == today %}table-primary{% endif %}"
+                            style="cursor: pointer; vertical-align: middle;"
+                            data-emp-id="{{ row.employee.id }}"
+                            data-emp-name="{{ row.employee.full_name }}"
+                            data-date="{{ day.date|date:'Y-m-d' }}"
+                            data-date-display="{{ day.date|date:'M d, Y' }}">
+
+                            {% if day.schedule %}
+                                <div class="schedule-entry"
+                                     data-schedule-id="{{ day.schedule.id }}"
+                                     data-shift="{{ day.schedule.get_shift_display }}"
+                                     data-area="{% if day.schedule.assigned_area %}{{ day.schedule.assigned_area.name }}{% endif %}"
+                                     data-notes="{{ day.schedule.notes }}">
+                                    {% if day.schedule.shift == 'morning' %}
+                                        <span class="badge bg-info text-dark d-block mb-1">
+                                            <i class="bi bi-sunrise"></i> Morning
+                                        </span>
+                                    {% elif day.schedule.shift == 'evening' %}
+                                        <span class="badge bg-warning text-dark d-block mb-1">
+                                            <i class="bi bi-sunset"></i> Evening
+                                        </span>
+                                    {% elif day.schedule.shift == 'night' %}
+                                        <span class="badge bg-dark d-block mb-1">
+                                            <i class="bi bi-moon"></i> Night
+                                        </span>
+                                    {% elif day.schedule.shift == 'full_day' %}
+                                        <span class="badge bg-primary d-block mb-1">
+                                            <i class="bi bi-sun"></i> Full Day
+                                        </span>
+                                    {% elif day.schedule.shift == 'off' %}
+                                        <span class="badge bg-secondary d-block mb-1">
+                                            <i class="bi bi-x-circle"></i> Off
+                                        </span>
+                                    {% endif %}
+                                    {% if day.schedule.assigned_area %}
+                                        <small class="text-muted d-block">
+                                            {{ day.schedule.assigned_area.name }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            {% if day.leave %}
+                                <div class="leave-entry"
+                                     data-leave-type="{{ day.leave.get_leave_type_display }}"
+                                     data-leave-reason="{{ day.leave.reason }}"
+                                     data-leave-dates="{{ day.leave.start_date|date:'M d' }} - {{ day.leave.end_date|date:'M d' }}">
+                                    <span class="badge bg-danger bg-opacity-75 d-block">
+                                        <i class="bi bi-calendar-x me-1"></i>{{ day.leave.get_leave_type_display }}
+                                    </span>
+                                </div>
+                            {% endif %}
                         </td>
-                        {% endwith %}
                         {% endfor %}
                     </tr>
                     {% empty %}
@@ -129,6 +143,169 @@
         <span class="badge bg-dark me-1"><i class="bi bi-moon"></i> Night</span>
         <span class="badge bg-primary me-1"><i class="bi bi-sun"></i> Full Day</span>
         <span class="badge bg-secondary me-1"><i class="bi bi-x-circle"></i> Off</span>
+        <span class="badge bg-danger bg-opacity-75 me-1"><i class="bi bi-calendar-x"></i> Leave</span>
     </small>
 </div>
+
+<!-- Cell Detail Modal -->
+<div class="modal fade" id="cellDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="modalTitle">Schedule Details</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+            </div>
+            <div class="modal-footer py-2" id="modalFooter" style="display: none;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-exclamation-triangle text-warning fs-1 d-block mb-2"></i>
+                <p class="mb-1 fw-semibold">Delete this schedule entry?</p>
+                <small class="text-muted">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer justify-content-center py-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .schedule-cell {
+        transition: background-color 0.15s;
+        min-height: 48px;
+        position: relative;
+    }
+    .schedule-cell:hover {
+        background-color: rgba(13, 110, 253, 0.06) !important;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var scheduleAccess = '{{ user_access.schedule }}';
+    var isAdmin = {{ has_admin_privileges|yesno:"true,false" }};
+    var canEdit = (scheduleAccess === 'edit' || scheduleAccess === 'full' || isAdmin);
+    var canDelete = (scheduleAccess === 'full' || isAdmin);
+
+    var cellModal = new bootstrap.Modal(document.getElementById('cellDetailModal'));
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+
+    function esc(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str || ''));
+        return div.innerHTML;
+    }
+
+    document.querySelectorAll('.schedule-cell').forEach(function(cell) {
+        cell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var empName = cell.dataset.empName;
+            var dateDisplay = cell.dataset.dateDisplay;
+            var empId = cell.dataset.empId;
+            var dateStr = cell.dataset.date;
+
+            var scheduleEntry = cell.querySelector('.schedule-entry');
+            var leaveEntry = cell.querySelector('.leave-entry');
+
+            var modalTitle = document.getElementById('modalTitle');
+            var modalBody = document.getElementById('modalBody');
+            var modalFooter = document.getElementById('modalFooter');
+
+            modalTitle.textContent = empName;
+            var bodyHtml = '<p class="text-muted small mb-2">' + esc(dateDisplay) + '</p>';
+            var footerHtml = '';
+            var showFooter = false;
+
+            if (scheduleEntry) {
+                var shift = scheduleEntry.dataset.shift;
+                var area = scheduleEntry.dataset.area;
+                var notes = scheduleEntry.dataset.notes;
+                var scheduleId = scheduleEntry.dataset.scheduleId;
+
+                bodyHtml += '<div class="mb-2"><strong>Shift:</strong> ' + esc(shift) + '</div>';
+                if (area) {
+                    bodyHtml += '<div class="mb-2"><strong>Area:</strong> ' + esc(area) + '</div>';
+                }
+                if (notes) {
+                    bodyHtml += '<div class="mb-2"><strong>Notes:</strong> ' + esc(notes) + '</div>';
+                }
+
+                if (leaveEntry) {
+                    var leaveType = leaveEntry.dataset.leaveType;
+                    var leaveDates = leaveEntry.dataset.leaveDates;
+                    bodyHtml += '<hr class="my-2">';
+                    bodyHtml += '<div class="mb-1"><span class="badge bg-danger bg-opacity-75"><i class="bi bi-calendar-x me-1"></i>' + esc(leaveType) + '</span></div>';
+                    bodyHtml += '<div class="small text-muted">' + esc(leaveDates) + '</div>';
+                }
+
+                if (canEdit) {
+                    showFooter = true;
+                    footerHtml += '<a href="{% url "schedule_view" %}' + esc(scheduleId) + '/edit/" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit</a>';
+                }
+                if (canDelete) {
+                    showFooter = true;
+                    footerHtml += '<button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="' + esc(scheduleId) + '"><i class="bi bi-trash me-1"></i>Delete</button>';
+                }
+
+            } else if (leaveEntry) {
+                var leaveType2 = leaveEntry.dataset.leaveType;
+                var leaveReason = leaveEntry.dataset.leaveReason;
+                var leaveDates2 = leaveEntry.dataset.leaveDates;
+
+                bodyHtml += '<div class="mb-2"><span class="badge bg-danger bg-opacity-75"><i class="bi bi-calendar-x me-1"></i>' + esc(leaveType2) + '</span></div>';
+                bodyHtml += '<div class="mb-2"><strong>Period:</strong> ' + esc(leaveDates2) + '</div>';
+                if (leaveReason) {
+                    bodyHtml += '<div class="mb-2"><strong>Reason:</strong> ' + esc(leaveReason) + '</div>';
+                }
+
+                if (canEdit) {
+                    showFooter = true;
+                    footerHtml += '<a href="{% url "schedule_assign" %}?employee=' + esc(empId) + '&date=' + esc(dateStr) + '" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-circle me-1"></i>Add Schedule</a>';
+                }
+
+            } else {
+                bodyHtml += '<p class="text-muted mb-0">No schedule assigned</p>';
+
+                if (canEdit) {
+                    showFooter = true;
+                    footerHtml += '<a href="{% url "schedule_assign" %}?employee=' + esc(empId) + '&date=' + esc(dateStr) + '" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle me-1"></i>Assign Schedule</a>';
+                }
+            }
+
+            modalBody.innerHTML = bodyHtml;
+            modalFooter.innerHTML = footerHtml;
+            modalFooter.style.display = showFooter ? '' : 'none';
+
+            // Bind delete button if it exists
+            var deleteBtn = modalFooter.querySelector('[data-delete-id]');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    var sid = this.dataset.deleteId;
+                    cellModal.hide();
+                    document.getElementById('deleteForm').action = '{% url "schedule_view" %}' + sid + '/delete/';
+                    setTimeout(function() { deleteModal.show(); }, 200);
+                });
+            }
+
+            cellModal.show();
+        });
+    });
+});
+</script>
 {% endblock %}

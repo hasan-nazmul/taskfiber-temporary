@@ -83,8 +83,37 @@ class LeaveRequestForm(forms.ModelForm):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
+        employee = cleaned_data.get('employee')
+
         if start_date and end_date and end_date < start_date:
             raise forms.ValidationError('End date must be after start date.')
+
+        # Prevent past-date leave requests
+        from django.utils import timezone
+        today = timezone.now().date()
+        if start_date and start_date < today:
+            self.add_error('start_date', 'Start date cannot be in the past.')
+        if end_date and end_date < today:
+            self.add_error('end_date', 'End date cannot be in the past.')
+
+        # Prevent overlapping with existing approved/pending leaves
+        if employee and start_date and end_date:
+            from .models import LeaveRequest
+            overlapping = LeaveRequest.objects.filter(
+                employee=employee,
+                status__in=['approved', 'pending'],
+                start_date__lte=end_date,
+                end_date__gte=start_date,
+            )
+            if self.instance.pk:
+                overlapping = overlapping.exclude(pk=self.instance.pk)
+            if overlapping.exists():
+                leave = overlapping.first()
+                raise forms.ValidationError(
+                    f'This overlaps with an existing {leave.get_status_display().lower()} leave '
+                    f'({leave.start_date.strftime("%b %d")} - {leave.end_date.strftime("%b %d")}).'
+                )
+
         return cleaned_data
 
 

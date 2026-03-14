@@ -3,6 +3,10 @@ from . import views
 
 urlpatterns = [
     path('', views.ticket_list, name='ticket_list'),
+    path('export/csv/', views.ticket_export_csv, name='ticket_export_csv'),
+    path('export/pdf/', views.ticket_export_pdf, name='ticket_export_pdf'),
+    path('import/csv/', views.ticket_import_csv, name='ticket_import_csv'),
+    path('import/template/', views.ticket_import_template, name='ticket_import_template'),
     path('create/', views.ticket_create, name='ticket_create'),
     path('my/', views.my_tickets, name='my_tickets'),
     path('<int:pk>/', views.ticket_detail, name='ticket_detail'),

@@ -13,6 +13,9 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
                     {{ form|crispy }}
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">

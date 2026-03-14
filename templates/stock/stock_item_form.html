@@ -13,6 +13,9 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
 
                     <div class="row">
                         <div class="col-md-6">{{ form.category|as_crispy_field }}</div>

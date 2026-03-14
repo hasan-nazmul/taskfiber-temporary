@@ -147,6 +147,33 @@ def profile(request):
 
 
 @login_required
+def change_password(request):
+    if request.method == 'POST':
+        current = request.POST.get('current_password', '')
+        new1 = request.POST.get('new_password', '')
+        new2 = request.POST.get('confirm_password', '')
+
+        if not request.user.check_password(current):
+            messages.error(request, 'Current password is incorrect.')
+        elif len(new1) < 6:
+            messages.error(request, 'New password must be at least 6 characters.')
+        elif new1 != new2:
+            messages.error(request, 'New passwords do not match.')
+        elif current == new1:
+            messages.error(request, 'New password must be different from current password.')
+        else:
+            request.user.set_password(new1)
+            request.user.save()
+            # Re-authenticate so the user stays logged in
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Password changed successfully.')
+            return redirect('profile')
+
+    return render(request, 'accounts/change_password.html')
+
+
+@login_required
 @check_module_access('employees', 'view')
 def employee_list(request):
     employees = Employee.objects.select_related('user', 'role').all()
@@ -187,6 +214,174 @@ def employee_list(request):
         }
     }
     return render(request, 'accounts/employee_list.html', context)
+
+
+def _get_filtered_employees(request):
+    """Shared filter logic for employee list and export."""
+    employees = Employee.objects.select_related('user', 'role').all()
+    department = request.GET.get('department')
+    role = request.GET.get('role')
+    status = request.GET.get('status')
+    search = request.GET.get('search')
+    if department:
+        employees = employees.filter(department=department)
+    if role:
+        employees = employees.filter(role__slug=role)
+    if status:
+        if status == 'active':
+            employees = employees.filter(is_active=True)
+        elif status == 'inactive':
+            employees = employees.filter(is_active=False)
+    if search:
+        employees = employees.filter(
+            Q(user__first_name__icontains=search) | Q(user__last_name__icontains=search) |
+            Q(employee_id__icontains=search) | Q(phone__icontains=search)
+        )
+    return employees
+
+
+@login_required
+@check_module_access('employees', 'view')
+def employee_export_csv(request):
+    from utils.export_helpers import csv_response
+    employees = _get_filtered_employees(request)
+    headers = ['Employee ID', 'Name', 'Role', 'Department', 'Phone', 'Joined', 'Status']
+    rows = [
+        [e.employee_id, e.full_name, e.role.name, e.get_department_display(),
+         e.phone, e.date_joined_company.strftime('%Y-%m-%d') if e.date_joined_company else '',
+         'Active' if e.is_active else 'Inactive']
+        for e in employees
+    ]
+    return csv_response('employees.csv', headers, rows)
+
+
+@login_required
+@check_module_access('employees', 'view')
+def employee_export_pdf(request):
+    from utils.export_helpers import pdf_response
+    employees = _get_filtered_employees(request)
+    headers = ['Employee ID', 'Name', 'Role', 'Department', 'Phone', 'Joined', 'Status']
+    rows = [
+        [e.employee_id, e.full_name, e.role.name, e.get_department_display(),
+         e.phone, e.date_joined_company.strftime('%Y-%m-%d') if e.date_joined_company else '',
+         'Active' if e.is_active else 'Inactive']
+        for e in employees
+    ]
+    return pdf_response('employees.pdf', 'Employee Report', headers, rows)
+
+
+EMPLOYEE_IMPORT_HEADERS = ['First Name', 'Last Name', 'Employee ID', 'Role', 'Phone', 'Department', 'Date Joined', 'Salary']
+
+
+@login_required
+@check_module_access('employees', 'edit')
+def employee_import_template(request):
+    from utils.import_helpers import sample_csv_response
+    return sample_csv_response('employee_import_template.csv', EMPLOYEE_IMPORT_HEADERS)
+
+
+@login_required
+@check_module_access('employees', 'edit')
+def employee_import_csv(request):
+    from utils.import_helpers import parse_csv
+    from django.db import transaction
+    from datetime import date as dt_date
+
+    context = {
+        'module_name': 'Employees',
+        'back_url': '/employees/',
+        'template_url': '/employees/import/template/',
+        'expected_columns': EMPLOYEE_IMPORT_HEADERS,
+    }
+
+    valid_departments = ['management', 'marketing', 'support', 'technical', 'accounts']
+
+    if request.method == 'POST':
+        csv_file = request.FILES.get('csv_file')
+        if not csv_file or not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Please upload a valid CSV file.')
+            return render(request, 'common/csv_import.html', context)
+
+        headers, rows = parse_csv(csv_file)
+        created = 0
+        skipped = 0
+        errors = []
+
+        for i, row in enumerate(rows, start=2):
+            try:
+                first_name = row.get('First Name', '').strip()
+                last_name = row.get('Last Name', '').strip()
+                if not first_name:
+                    errors.append({'row': i, 'message': 'First Name is required'})
+                    continue
+
+                employee_id = row.get('Employee ID', '').strip()
+                if employee_id and Employee.objects.filter(employee_id=employee_id).exists():
+                    skipped += 1
+                    continue
+
+                phone = row.get('Phone', '').strip()
+                if not phone:
+                    errors.append({'row': i, 'message': 'Phone is required'})
+                    continue
+                if Employee.objects.filter(phone=phone).exists():
+                    skipped += 1
+                    continue
+
+                role_name = row.get('Role', '').strip()
+                if not role_name:
+                    errors.append({'row': i, 'message': 'Role is required'})
+                    continue
+                try:
+                    role = Role.objects.get(name__iexact=role_name)
+                except Role.DoesNotExist:
+                    errors.append({'row': i, 'message': f'Role "{role_name}" not found'})
+                    continue
+
+                department = row.get('Department', '').strip().lower()
+                if department not in valid_departments:
+                    errors.append({'row': i, 'message': f'Invalid department "{row.get("Department", "")}"'})
+                    continue
+
+                date_joined = None
+                date_str = row.get('Date Joined', '').strip()
+                if date_str:
+                    try:
+                        date_joined = dt_date.fromisoformat(date_str)
+                    except ValueError:
+                        errors.append({'row': i, 'message': f'Invalid date format "{date_str}". Use YYYY-MM-DD'})
+                        continue
+
+                salary = row.get('Salary', '0').strip() or '0'
+
+                with transaction.atomic():
+                    username = phone
+                    if User.objects.filter(username=username).exists():
+                        skipped += 1
+                        continue
+
+                    user = User.objects.create_user(
+                        username=username,
+                        first_name=first_name,
+                        last_name=last_name,
+                        password='changeme123',
+                    )
+                    Employee.objects.create(
+                        user=user,
+                        employee_id=employee_id or '',
+                        role=role,
+                        phone=phone,
+                        department=department,
+                        date_joined_company=date_joined,
+                        salary=salary,
+                    )
+                    created += 1
+            except Exception as e:
+                errors.append({'row': i, 'message': str(e)})
+
+        context['results'] = {'created': created, 'skipped': skipped, 'errors': errors}
+
+    return render(request, 'common/csv_import.html', context)
 
 
 @login_required
@@ -359,12 +554,11 @@ def employee_edit(request, pk):
 @check_module_access('employees', 'full')
 def employee_module_access(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
-    is_target_owner_admin = employee.user.is_superuser or (employee.role and employee.role.slug == 'owner')
-    is_requester_owner_admin = request.user.is_superuser or (hasattr(request.user, 'employee') and request.user.employee and request.user.employee.role and request.user.employee.role.slug == 'owner')
 
-    if is_target_owner_admin and not is_requester_owner_admin:
-        messages.error(request, "You do not have permission to modify module access for an Owner or System Admin.")
-        return redirect('dashboard')
+    # Owner/superuser always has full access — permissions page is unnecessary
+    if employee.user.is_superuser or (employee.role and employee.role.slug == 'owner'):
+        messages.info(request, f'{employee.full_name} is an Owner/Admin and already has full access. Permissions cannot be modified.')
+        return redirect('employee_detail', pk=employee.pk)
 
     module_access, created = ModuleAccess.objects.get_or_create(employee=employee)
 
