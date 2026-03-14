@@ -34,6 +34,6 @@ class Command(BaseCommand):
             self.stdout.write('Skipping superuser bootstrap.')
         else:
             self.stdout.write('Ensuring deploy superuser exists...')
-            call_command('ensure_superuser')
+            call_command('ensure_superuser', '--force-password-reset')
 
         self.stdout.write(self.style.SUCCESS('Deploy bootstrap complete.'))

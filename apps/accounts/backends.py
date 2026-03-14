@@ -1,13 +1,16 @@
+import logging
+
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from .models import Employee
+
+logger = logging.getLogger(__name__)
 
 
 class PhoneAuthBackend(ModelBackend):
     """Authenticate using employee phone number instead of username."""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
-        # username param actually holds the phone number from the login form
         if not username or not password:
             return None
 
@@ -17,12 +20,18 @@ class PhoneAuthBackend(ModelBackend):
             )
             user = employee.user
         except Employee.DoesNotExist:
-            # Run the default password hasher to prevent timing attacks
             User().set_password(password)
-            # Fallback allows admin/superuser login by username when no employee profile exists.
-            return super().authenticate(request, username=username, password=password, **kwargs)
-
-        if user.check_password(password) and self.user_can_authenticate(user):
+            user = super().authenticate(request, username=username, password=password, **kwargs)
+            if user is None:
+                logger.warning('Auth failed: no employee with phone=%s and username fallback failed', username)
             return user
 
-        return None
+        if not user.check_password(password):
+            logger.warning('Auth failed: password mismatch for user=%s (phone=%s)', user.username, username)
+            return None
+
+        if not self.user_can_authenticate(user):
+            logger.warning('Auth failed: user=%s is inactive (is_active=%s)', user.username, user.is_active)
+            return None
+
+        return user
