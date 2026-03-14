@@ -19,7 +19,8 @@ class PhoneAuthBackend(ModelBackend):
         except Employee.DoesNotExist:
             # Run the default password hasher to prevent timing attacks
             User().set_password(password)
-            return None
+            # Fallback allows admin/superuser login by username when no employee profile exists.
+            return super().authenticate(request, username=username, password=password, **kwargs)
 
         if user.check_password(password) and self.user_can_authenticate(user):
             return user

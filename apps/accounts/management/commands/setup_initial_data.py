@@ -1,9 +1,8 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
-from apps.accounts.models import Role, Employee
+from django.core.management import call_command
+from apps.accounts.models import Role
 from apps.customers.models import Area, Package
 from apps.stock.models import StockCategory
-from datetime import date
 
 
 class Command(BaseCommand):
@@ -92,32 +91,8 @@ class Command(BaseCommand):
             status = 'Created' if created else 'Exists'
             self.stdout.write(f'  Stock Category: {name} [{status}]')
 
-        # --- Admin User + Employee ---
-        if not User.objects.filter(username='admin').exists():
-            admin_user = User.objects.create_superuser(
-                username='admin',
-                password='admin123',
-                first_name='System',
-                last_name='Admin',
-                email='admin@isp.local'
-            )
-
-            owner_role = Role.objects.get(slug='owner')
-            Employee.objects.create(
-                user=admin_user,
-                employee_id='EMP-0001',
-                role=owner_role,
-                phone='01700000000',
-                department='management',
-                date_joined_company=date.today(),
-            )
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    '\n  Admin user created: username=admin, password=admin123'
-                )
-            )
-        else:
-            self.stdout.write('  Admin user already exists.')
+        # --- Optional deploy superuser (env-based) ---
+        self.stdout.write('\n  Running optional superuser bootstrap from environment...')
+        call_command('ensure_superuser')
 
         self.stdout.write(self.style.SUCCESS('\n✅ Initial data setup complete!'))
