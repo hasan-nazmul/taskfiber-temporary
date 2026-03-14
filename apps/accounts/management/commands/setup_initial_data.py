@@ -8,6 +8,13 @@ from apps.stock.models import StockCategory
 class Command(BaseCommand):
     help = 'Setup initial data for the ISP Manager system'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--force-password-reset',
+            action='store_true',
+            help='Reset superuser password from env var.',
+        )
+
     def handle(self, *args, **kwargs):
         self.stdout.write('Setting up initial data...\n')
 
@@ -93,6 +100,9 @@ class Command(BaseCommand):
 
         # --- Optional deploy superuser (env-based) ---
         self.stdout.write('\n  Running optional superuser bootstrap from environment...')
-        call_command('ensure_superuser')
+        su_args = []
+        if kwargs.get('force_password_reset'):
+            su_args.append('--force-password-reset')
+        call_command('ensure_superuser', *su_args)
 
         self.stdout.write(self.style.SUCCESS('\n✅ Initial data setup complete!'))
