@@ -21,6 +21,7 @@ class Command(BaseCommand):
         # --- Roles ---
         roles_data = [
             ('Owner', 'owner', 'System owner with full access'),
+            ('System Admin', 'system_admin', 'System administrator with full access'),
             ('Manager', 'manager', 'Office manager'),
             ('Marketing', 'marketing', 'Marketing team member'),
             ('Support Agent', 'support_agent', 'Customer support agent'),

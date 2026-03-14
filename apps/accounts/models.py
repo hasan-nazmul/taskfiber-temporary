@@ -56,7 +56,7 @@ class Employee(models.Model):
 
     @property
     def is_manager(self):
-        return self.role.slug in ['owner', 'manager']
+        return self.role.slug in ['owner', 'system_admin', 'manager']
 
     @property
     def is_technician(self):
