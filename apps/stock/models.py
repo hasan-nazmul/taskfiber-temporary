@@ -115,3 +115,7 @@ class StockTransaction(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['transaction_type']),
+            models.Index(fields=['created_at']),
+        ]

@@ -1,7 +1,7 @@
 import io
 import csv
 from datetime import datetime
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.units import mm
@@ -9,15 +9,23 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 
+class Echo:
+    """Pseudo-buffer for streaming CSV writes."""
+    def write(self, value):
+        return value
+
+
 def csv_response(filename, headers, rows):
-    """Build a CSV HttpResponse from headers and row data."""
-    response = HttpResponse(content_type='text/csv')
+    """Build a streaming CSV response from headers and row data."""
+    def stream():
+        writer = csv.writer(Echo())
+        yield '\ufeff'  # UTF-8 BOM for Excel compatibility
+        yield writer.writerow(headers)
+        for row in rows:
+            yield writer.writerow(row)
+
+    response = StreamingHttpResponse(stream(), content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    response.write('\ufeff')  # UTF-8 BOM for Excel compatibility
-    writer = csv.writer(response)
-    writer.writerow(headers)
-    for row in rows:
-        writer.writerow(row)
     return response
 
 

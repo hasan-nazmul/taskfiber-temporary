@@ -129,11 +129,21 @@ def ticket_list(request):
     except EmptyPage:
         tickets_page = paginator.page(paginator.num_pages)
 
-    employees = Employee.objects.filter(
-        is_active=True
-    ).exclude(
-        role__slug__in=['owner', 'manager']
-    ).select_related('user')
+    from django.core.cache import cache
+
+    employees = cache.get('ticket_filter_employees')
+    if employees is None:
+        employees = list(Employee.objects.filter(
+            is_active=True
+        ).exclude(
+            role__slug__in=['owner', 'manager']
+        ).select_related('user'))
+        cache.set('ticket_filter_employees', employees, 300)
+
+    team_choices = cache.get('ticket_filter_teams')
+    if team_choices is None:
+        team_choices = list(Team.objects.all())
+        cache.set('ticket_filter_teams', team_choices, 300)
 
     context = {
         'tickets': tickets_page,
@@ -150,7 +160,7 @@ def ticket_list(request):
         'status_choices': Ticket.STATUS_CHOICES,
         'type_choices': Ticket.TICKET_TYPE_CHOICES,
         'priority_choices': Ticket.PRIORITY_CHOICES,
-        'team_choices': Team.objects.all(),
+        'team_choices': team_choices,
     }
     return render(request, 'tickets/ticket_list.html', context)
 
@@ -629,8 +639,18 @@ def my_tickets(request):
         # Default: show only active tickets
         tickets = tickets.exclude(status__in=['closed', 'cancelled'])
 
+    # Pagination
+    paginator = Paginator(tickets, 25)
+    page = request.GET.get('page')
+    try:
+        tickets_page = paginator.page(page)
+    except PageNotAnInteger:
+        tickets_page = paginator.page(1)
+    except EmptyPage:
+        tickets_page = paginator.page(paginator.num_pages)
+
     context = {
-        'tickets': tickets,
+        'tickets': tickets_page,
         'employee': employee,
         'filters': {'status': status},
         'status_choices': Ticket.STATUS_CHOICES,

@@ -39,8 +39,17 @@ def customer_list(request):
     if connection_type:
         customers = customers.filter(connection_type=connection_type)
 
-    areas = Area.objects.filter(is_active=True)
-    packages = Package.objects.filter(is_active=True)
+    from django.core.cache import cache
+
+    areas = cache.get('active_areas')
+    if areas is None:
+        areas = list(Area.objects.filter(is_active=True))
+        cache.set('active_areas', areas, 300)
+
+    active_packages = cache.get('active_packages')
+    if active_packages is None:
+        active_packages = list(Package.objects.filter(is_active=True))
+        cache.set('active_packages', active_packages, 300)
 
     # Pagination
     paginator = Paginator(customers, 30)
@@ -55,7 +64,7 @@ def customer_list(request):
     context = {
         'customers': customers_page,
         'areas': areas,
-        'packages': packages,
+        'packages': active_packages,
         'filters': {
             'search': search,
             'area': area,

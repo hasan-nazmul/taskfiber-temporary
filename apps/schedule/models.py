@@ -81,6 +81,9 @@ class Attendance(models.Model):
     class Meta:
         unique_together = ['employee', 'date']
         ordering = ['-date', 'employee']
+        indexes = [
+            models.Index(fields=['date', 'status']),
+        ]
 
 
 class LeaveRequest(models.Model):

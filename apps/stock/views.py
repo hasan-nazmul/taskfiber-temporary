@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, F, Sum, Count
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import StockCategory, StockItem, StockTransaction
 from .forms import (
@@ -47,22 +48,33 @@ def stock_list(request):
         elif status == 'inactive':
             items = items.filter(is_active=False)
 
-    categories = StockCategory.objects.all()
+    from django.core.cache import cache
 
-    total_items = StockItem.objects.filter(is_active=True).count()
-    low_stock_count = StockItem.objects.filter(
-        is_active=True,
-        quantity_in_stock__lte=F('minimum_stock_level')
-    ).count()
-    out_of_stock_count = StockItem.objects.filter(
-        is_active=True, quantity_in_stock=0
-    ).count()
-    total_value = StockItem.objects.filter(is_active=True).aggregate(
-        total=Sum(F('quantity_in_stock') * F('purchase_price'))
-    )['total'] or 0
+    categories = cache.get('stock_categories')
+    if categories is None:
+        categories = list(StockCategory.objects.all())
+        cache.set('stock_categories', categories, 300)
+
+    # Single aggregated query instead of 4 separate ones
+    stock_stats = StockItem.objects.filter(is_active=True).aggregate(
+        total_items=Count('id'),
+        low_stock_count=Count('id', filter=Q(quantity_in_stock__lte=F('minimum_stock_level'))),
+        out_of_stock_count=Count('id', filter=Q(quantity_in_stock=0)),
+        total_value=Sum(F('quantity_in_stock') * F('purchase_price')),
+    )
+
+    # Pagination
+    paginator = Paginator(items, 30)
+    page = request.GET.get('page')
+    try:
+        items_page = paginator.page(page)
+    except PageNotAnInteger:
+        items_page = paginator.page(1)
+    except EmptyPage:
+        items_page = paginator.page(paginator.num_pages)
 
     context = {
-        'items': items,
+        'items': items_page,
         'categories': categories,
         'filters': {
             'search': search,
@@ -71,10 +83,10 @@ def stock_list(request):
             'status': status,
         },
         'stats': {
-            'total_items': total_items,
-            'low_stock_count': low_stock_count,
-            'out_of_stock_count': out_of_stock_count,
-            'total_value': total_value,
+            'total_items': stock_stats['total_items'],
+            'low_stock_count': stock_stats['low_stock_count'],
+            'out_of_stock_count': stock_stats['out_of_stock_count'],
+            'total_value': stock_stats['total_value'] or 0,
         }
     }
     return render(request, 'stock/stock_list.html', context)
@@ -381,8 +393,18 @@ def stock_transactions(request):
     if date_to:
         transactions = transactions.filter(created_at__date__lte=date_to)
 
+    # Pagination
+    paginator = Paginator(transactions, 30)
+    page = request.GET.get('page')
+    try:
+        transactions_page = paginator.page(page)
+    except PageNotAnInteger:
+        transactions_page = paginator.page(1)
+    except EmptyPage:
+        transactions_page = paginator.page(paginator.num_pages)
+
     context = {
-        'transactions': transactions[:100],
+        'transactions': transactions_page,
         'filters': {
             'search': search,
             'type': txn_type,

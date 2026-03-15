@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db import IntegrityError
 from django.db.models import Q, Count
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.http import require_POST
 from datetime import timedelta, date
 
@@ -519,24 +520,33 @@ def attendance_report(request):
 
     employees = Employee.objects.filter(is_active=True).select_related('user', 'role')
 
-    # Get all attendance records for the month
-    attendances = Attendance.objects.filter(
+    # Aggregated attendance summary - single query instead of 5 per employee
+    attendance_agg = Attendance.objects.filter(
         date__gte=start_date,
-        date__lte=end_date
+        date__lte=end_date,
+        employee__is_active=True,
+    ).values('employee_id').annotate(
+        present=Count('id', filter=Q(status='present')),
+        absent=Count('id', filter=Q(status='absent')),
+        late=Count('id', filter=Q(status='late')),
+        half_day=Count('id', filter=Q(status='half_day')),
+        leave=Count('id', filter=Q(status='leave')),
+        total_marked=Count('id'),
     )
+    agg_lookup = {row['employee_id']: row for row in attendance_agg}
 
     # Build summary
     summary = {}
     for emp in employees:
-        emp_attendance = attendances.filter(employee=emp)
+        row = agg_lookup.get(emp.id, {})
         summary[emp.id] = {
             'employee': emp,
-            'present': emp_attendance.filter(status='present').count(),
-            'absent': emp_attendance.filter(status='absent').count(),
-            'late': emp_attendance.filter(status='late').count(),
-            'half_day': emp_attendance.filter(status='half_day').count(),
-            'leave': emp_attendance.filter(status='leave').count(),
-            'total_marked': emp_attendance.count(),
+            'present': row.get('present', 0),
+            'absent': row.get('absent', 0),
+            'late': row.get('late', 0),
+            'half_day': row.get('half_day', 0),
+            'leave': row.get('leave', 0),
+            'total_marked': row.get('total_marked', 0),
         }
 
     # Month navigation
@@ -591,8 +601,18 @@ def leave_request_list(request):
     if status_filter:
         leaves = leaves.filter(status=status_filter)
 
+    # Pagination
+    paginator = Paginator(leaves, 25)
+    page = request.GET.get('page')
+    try:
+        leaves_page = paginator.page(page)
+    except PageNotAnInteger:
+        leaves_page = paginator.page(1)
+    except EmptyPage:
+        leaves_page = paginator.page(paginator.num_pages)
+
     context = {
-        'leaves': leaves,
+        'leaves': leaves_page,
         'filters': {'status': status_filter},
         'status_choices': LeaveRequest.STATUS_CHOICES,
         'is_hr': is_hr,

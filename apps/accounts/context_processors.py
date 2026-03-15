@@ -1,7 +1,11 @@
+from django.core.cache import cache
+
+
 def module_access_processor(request):
     """
-    Injects a 'user_access' dictionary into the template context 
+    Injects a 'user_access' dictionary into the template context
     with the granular module access levels for the logged in employee.
+    Cached per user for 5 minutes to avoid repeated DB lookups.
     """
     levels = {
         'tickets': 'none',
@@ -16,6 +20,11 @@ def module_access_processor(request):
     is_admin = False
 
     if request.user.is_authenticated:
+        cache_key = f'user_access_{request.user.id}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         if getattr(request.user, 'is_superuser', False):
             is_admin = True
             for k in levels:
@@ -37,8 +46,14 @@ def module_access_processor(request):
                     levels['teams'] = access.teams_access
                     levels['accounts'] = access.accounts_finance_access
                 except Exception:
-                    # In case module_access doesn't exist for a user
                     pass
+
+        result = {
+            'user_access': levels,
+            'has_admin_privileges': is_admin
+        }
+        cache.set(cache_key, result, 300)
+        return result
 
     return {
         'user_access': levels,

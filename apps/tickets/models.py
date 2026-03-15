@@ -138,6 +138,14 @@ class Ticket(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['ticket_type']),
+            models.Index(fields=['priority']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['assigned_to', 'status']),
+        ]
 
 
 class TicketComment(models.Model):

@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from .models import Employee, Role, ModuleAccess, Team
 from .forms import LoginForm, EmployeeUserForm, EmployeeForm, ModuleAccessForm, TeamForm
 from .decorators import check_module_access
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 logger = logging.getLogger(__name__)
 
@@ -86,22 +87,23 @@ def logout_view(request):
 def dashboard(request):
     from apps.tickets.models import Ticket
     from apps.stock.models import StockItem
+    from django.core.cache import cache
 
     today = timezone.now().date()
 
-    # Ticket stats
-    ticket_stats = {
-        'open': Ticket.objects.filter(status='open').count(),
-        'assigned': Ticket.objects.filter(status='assigned').count(),
-        'in_progress': Ticket.objects.filter(status='in_progress').count(),
-        'resolved_today': Ticket.objects.filter(
-            status='resolved', resolved_at__date=today
-        ).count(),
-        'new_today': Ticket.objects.filter(created_at__date=today).count(),
-        'total_open': Ticket.objects.exclude(
-            status__in=['resolved', 'closed', 'cancelled']
-        ).count(),
-    }
+    # Ticket stats - single aggregated query instead of 6 separate ones
+    cache_key = f'dashboard_ticket_stats_{today.isoformat()}'
+    ticket_stats = cache.get(cache_key)
+    if not ticket_stats:
+        ticket_stats = Ticket.objects.aggregate(
+            open=Count('id', filter=Q(status='open')),
+            assigned=Count('id', filter=Q(status='assigned')),
+            in_progress=Count('id', filter=Q(status='in_progress')),
+            resolved_today=Count('id', filter=Q(status='resolved', resolved_at__date=today)),
+            new_today=Count('id', filter=Q(created_at__date=today)),
+            total_open=Count('id', filter=~Q(status__in=['resolved', 'closed', 'cancelled'])),
+        )
+        cache.set(cache_key, ticket_stats, 60)
 
     # Recent tickets
     recent_tickets = Ticket.objects.select_related(
@@ -203,8 +205,18 @@ def employee_list(request):
 
     roles = Role.objects.all()
 
+    # Pagination
+    paginator = Paginator(employees, 30)
+    page = request.GET.get('page')
+    try:
+        employees_page = paginator.page(page)
+    except PageNotAnInteger:
+        employees_page = paginator.page(1)
+    except EmptyPage:
+        employees_page = paginator.page(paginator.num_pages)
+
     context = {
-        'employees': employees,
+        'employees': employees_page,
         'roles': roles,
         'filters': {
             'department': department,
@@ -566,6 +578,9 @@ def employee_module_access(request, pk):
         form = ModuleAccessForm(request.POST, instance=module_access)
         if form.is_valid():
             form.save()
+            # Invalidate cached module access for this user
+            from django.core.cache import cache
+            cache.delete(f'user_access_{employee.user_id}')
             messages.success(request, f'Module access for {employee.full_name} updated successfully!')
             return redirect('employee_detail', pk=employee.pk)
     else:
