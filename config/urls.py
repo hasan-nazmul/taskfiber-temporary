@@ -1,10 +1,18 @@
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.defaults import page_not_found, server_error, permission_denied
 
+
+def health(request):
+    """Returns 200 for uptime monitors and keep-alive cron jobs."""
+    return HttpResponse("ok", content_type="text/plain", status=200)
+
+
 urlpatterns = [
+    path('health/', health),
     path('admin/', admin.site.urls),
     path('', include('apps.accounts.urls')),
     path('customers/', include('apps.customers.urls')),
