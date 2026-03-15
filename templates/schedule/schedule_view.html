@@ -30,11 +30,11 @@
             <i class="bi bi-upload me-1"></i>Import CSV
         </a>
         {% endif %}
-        <a href="{% url 'schedule_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm" title="Export CSV">
-            <i class="bi bi-filetype-csv"></i>
+        <a href="{% url 'schedule_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm" title="Export CSV">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
         </a>
-        <a href="{% url 'schedule_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm" title="Export PDF">
-            <i class="bi bi-filetype-pdf"></i>
+        <a href="{% url 'schedule_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm" title="Export PDF">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
         </a>
     </div>
 </div>
