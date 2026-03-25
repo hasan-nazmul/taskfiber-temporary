@@ -73,6 +73,14 @@
                     </div>
                 </div>
                 {% endif %}
+                {% if employee.telegram_chat_id %}
+                <div class="mb-3">
+                    <div class="detail-label">Telegram ID</div>
+                    <div class="detail-value">
+                        <i class="bi bi-telegram me-2 text-primary"></i>{{ employee.telegram_chat_id }}
+                    </div>
+                </div>
+                {% endif %}
                 <div class="mb-3">
                     <div class="detail-label">Email</div>
                     <div class="detail-value"><i class="bi bi-envelope me-2 text-muted"></i>{{ employee.user.email|default:"—" }}</div>

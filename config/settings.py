@@ -1,9 +1,13 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from a .env file if it exists
+load_dotenv(BASE_DIR / '.env')
 
 
 def env_bool(name, default=False):
@@ -227,3 +231,7 @@ LOGGING = {
         }
     },
 }
+
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')

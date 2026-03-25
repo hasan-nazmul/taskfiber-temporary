@@ -41,6 +41,8 @@ class Employee(models.Model):
     # For field technicians
     assigned_area = models.CharField(max_length=200, blank=True,
                                       help_text='Primarily assigned area for field work')
+    telegram_chat_id = models.CharField(max_length=50, blank=True, null=True, 
+                                        help_text='Telegram Chat ID for notifications')
 
     profile_photo = models.ImageField(upload_to='employees/', blank=True)
     notes = models.TextField(blank=True)

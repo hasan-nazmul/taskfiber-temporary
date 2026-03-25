@@ -84,6 +84,7 @@ class EmployeeForm(forms.ModelForm):
             'nid_number', 'address', 'department',
             'date_joined_company', 'salary', 'is_active',
             'assigned_area', 'profile_photo', 'notes',
+            'telegram_chat_id',
         ]
         widgets = {
             'date_joined_company': forms.DateInput(attrs={'type': 'date'}),

@@ -12,4 +12,4 @@ class RoleAdmin(admin.ModelAdmin):
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ['employee_id', 'full_name', 'role', 'department', 'phone', 'is_active']
     list_filter = ['role', 'department', 'is_active']
-    search_fields = ['user__first_name', 'user__last_name', 'employee_id', 'phone']
+    search_fields = ['user__first_name', 'user__last_name', 'employee_id', 'phone', 'telegram_chat_id']
