@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import webhook
 
 urlpatterns = [
     path('', views.ticket_list, name='ticket_list'),
@@ -15,4 +16,5 @@ urlpatterns = [
 
     # API
     path('api/customer-search/', views.customer_search_api, name='customer_search_api'),
+    path('telegram-webhook/<str:token>/', webhook.telegram_webhook, name='telegram_webhook'),
 ]

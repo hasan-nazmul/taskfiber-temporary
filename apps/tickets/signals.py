@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Ticket)
 def send_telegram_notification(sender, instance, created, **kwargs):
+    # Skip if we deliberately asked it to avoid looping
+    if getattr(instance, '_skip_telegram', False):
+        return
+
     # Condition 1: Only send if ticket has an assigned employee AND that employee has a telegram_chat_id
     if not instance.assigned_to:
         return
@@ -51,10 +55,21 @@ def send_telegram_notification(sender, instance, created, **kwargs):
     message += f"🌐 <a href=\"{site_url}/tickets/{instance.id}/\">Click here to open ticket</a>"
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
+    
+    inline_keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "🚀 Accept (In Progress)", "callback_data": f"accept_{instance.id}"},
+                {"text": "✅ Mark as Resolved", "callback_data": f"resolve_{instance.id}"}
+            ]
+        ]
+    }
+    
     payload = {
         'chat_id': chat_id,
         'text': message,
-        'parse_mode': 'HTML'
+        'parse_mode': 'HTML',
+        'reply_markup': inline_keyboard
     }
 
     # Wrap the request in a try/except block
