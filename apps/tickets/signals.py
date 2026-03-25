@@ -1,5 +1,6 @@
 import logging
 import requests
+import html
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
@@ -22,7 +23,6 @@ def send_telegram_notification(sender, instance, created, **kwargs):
         logger.warning("TELEGRAM_BOT_TOKEN is not configured in settings.")
         return
 
-    import html
     # Condition 2: Differentiate between a newly created ticket and an updated ticket
     if created:
         header = "🚨 <b>NEW TICKET ASSIGNED</b> 🚨"
