@@ -22,11 +22,12 @@ def send_telegram_notification(sender, instance, created, **kwargs):
         logger.warning("TELEGRAM_BOT_TOKEN is not configured in settings.")
         return
 
+    import html
     # Condition 2: Differentiate between a newly created ticket and an updated ticket
     if created:
-        header = "🚨 *NEW TICKET ASSIGNED* 🚨"
+        header = "🚨 <b>NEW TICKET ASSIGNED</b> 🚨"
     else:
-        header = "🔄 *TICKET UPDATED* 🔄"
+        header = "🔄 <b>TICKET UPDATED</b> 🔄"
 
     # Get dynamic values handling potential nulls
     customer_name = instance.customer.name if instance.customer else instance.contact_name
@@ -36,25 +37,32 @@ def send_telegram_notification(sender, instance, created, **kwargs):
 
     site_url = getattr(settings, 'SITE_URL', 'http://localhost:8000').rstrip('/')
     
-    # Message Formatting (Markdown) blending the requested elements
+    # Message Formatting using HTML (Much safer than Markdown for dynamic user input)
+    safe_customer = html.escape(str(customer_name or 'N/A'))
+    safe_address = html.escape(str(address or 'N/A'))
+    safe_issue = html.escape(str(issue or 'N/A'))
+    
     message = f"{header}\n\n"
-    message += f"*Ticket #:* {instance.ticket_number}\n"
-    message += f"*Customer:* {customer_name}\n"
-    message += f"*Issue:* {issue}\n"
-    message += f"*Address:* {address}\n"
-    message += f"*Priority:* {priority_display}\n\n"
-    message += f"🌐 [Click here to open ticket]({site_url}/tickets/{instance.id}/)"
+    message += f"<b>Ticket #:</b> {instance.ticket_number}\n"
+    message += f"<b>Customer:</b> {safe_customer}\n"
+    message += f"<b>Issue:</b> {safe_issue}\n"
+    message += f"<b>Address:</b> {safe_address}\n"
+    message += f"<b>Priority:</b> {priority_display}\n\n"
+    message += f"🌐 <a href=\"{site_url}/tickets/{instance.id}/\">Click here to open ticket</a>"
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         'chat_id': chat_id,
         'text': message,
-        'parse_mode': 'Markdown'
+        'parse_mode': 'HTML'
     }
 
-    # Wrap the request in a try/except block with timeout as requested
+    # Wrap the request in a try/except block
     try:
         response = requests.post(url, json=payload, timeout=5)
         response.raise_for_status()
     except Exception as e:
-        logger.error(f"Failed to send Telegram notification for ticket {instance.ticket_number}: {str(e)}")
+        logger.error(f"Failed to send Telegram notification (Chat: {chat_id}) for ticket {instance.ticket_number}. Error: {str(e)}")
+        # If it fails, log the response text if available for easier debugging
+        if hasattr(e, 'response') and e.response is not None:
+             logger.error(f"Telegram API Response: {e.response.text}")
