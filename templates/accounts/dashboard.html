@@ -19,6 +19,32 @@
     </div>
 </div>
 
+<!-- Team Task Quick Links -->
+<div class="row mb-4 pt-2">
+    <div class="col-12">
+        <div class="d-flex flex-wrap gap-3">
+            <a href="{% url 'ticket_list' %}?team_group=cable&status=open" class="btn btn-outline-primary fw-bold shadow-sm d-flex align-items-center">
+                <i class="bi bi-tools me-2 fs-5"></i> 
+                <span>Cable Team Tasks
+                    <span class="badge bg-primary ms-2 rounded-pill">{{ ticket_stats.cable_team_tasks }}</span>
+                </span>
+            </a>
+            <a href="{% url 'ticket_list' %}?team_group=support&status=open" class="btn btn-outline-info fw-bold shadow-sm text-dark d-flex align-items-center">
+                <i class="bi bi-headset me-2 fs-5"></i> 
+                <span>Support Tasks
+                    <span class="badge bg-info text-dark ms-2 rounded-pill">{{ ticket_stats.support_tasks }}</span>
+                </span>
+            </a>
+            <a href="{% url 'ticket_list' %}?ticket_type=line_cut&status=open" class="btn btn-outline-danger fw-bold shadow-sm d-flex align-items-center">
+                <i class="bi bi-scissors me-2 fs-5"></i> 
+                <span>Line Cuts 
+                    <span class="badge bg-danger ms-2 rounded-pill">{{ ticket_stats.critical_line_cuts }}</span>
+                </span>
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Stat Cards -->
 <div class="row g-3 mb-3">
     <div class="col-6 col-md-4 col-xl-2">
@@ -77,31 +103,7 @@
     </div>
 </div>
 
-<!-- Team Task Quick Links -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex flex-wrap gap-3">
-            <a href="{% url 'ticket_list' %}?ticket_type=line_cut&status=open" class="btn btn-outline-danger fw-bold shadow-sm d-flex align-items-center">
-                <i class="bi bi-scissors me-2 fs-5"></i> 
-                <span>Line Cuts 
-                    <span class="badge bg-danger ms-2 rounded-pill">{{ ticket_stats.critical_line_cuts }}</span>
-                </span>
-            </a>
-            <a href="{% url 'ticket_list' %}?team_group=cable&status=open" class="btn btn-outline-primary fw-bold shadow-sm d-flex align-items-center">
-                <i class="bi bi-tools me-2 fs-5"></i> 
-                <span>Cable Team Tasks
-                    <span class="badge bg-primary ms-2 rounded-pill">{{ ticket_stats.cable_team_tasks }}</span>
-                </span>
-            </a>
-            <a href="{% url 'ticket_list' %}?team_group=support&status=open" class="btn btn-outline-info fw-bold shadow-sm text-dark d-flex align-items-center">
-                <i class="bi bi-headset me-2 fs-5"></i> 
-                <span>Support Tasks
-                    <span class="badge bg-info text-dark ms-2 rounded-pill">{{ ticket_stats.support_tasks }}</span>
-                </span>
-            </a>
-        </div>
-    </div>
-</div>
+
 
 <div class="row g-4">
     <!-- Recent Tickets -->
