@@ -54,6 +54,7 @@
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
+                    <option value="unresolved" {% if filters.status == 'unresolved' %}selected{% endif %}>Pending (Unresolved)</option>
                     {% for val, label in status_choices %}
                     <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}

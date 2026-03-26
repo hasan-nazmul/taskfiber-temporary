@@ -98,7 +98,10 @@ def ticket_list(request):
             Q(contact_phone__icontains=search)
         )
     if status:
-        tickets = tickets.filter(status=status)
+        if status == 'unresolved':
+            tickets = tickets.exclude(status__in=['resolved', 'closed', 'cancelled'])
+        else:
+            tickets = tickets.filter(status=status)
     if ticket_type:
         tickets = tickets.filter(ticket_type=ticket_type)
     if priority:
@@ -193,7 +196,10 @@ def _get_filtered_tickets(request):
             Q(contact_name__icontains=search) | Q(contact_phone__icontains=search)
         )
     if status:
-        tickets = tickets.filter(status=status)
+        if status == 'unresolved':
+            tickets = tickets.exclude(status__in=['resolved', 'closed', 'cancelled'])
+        else:
+            tickets = tickets.filter(status=status)
     if ticket_type:
         tickets = tickets.filter(ticket_type=ticket_type)
     if priority:
