@@ -22,6 +22,17 @@
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-xl-2">
+        <a href="{% url 'ticket_list' %}?ticket_type=line_cut&status=open" class="text-decoration-none">
+            <div class="card stat-card stat-card-red" style="border: 2px solid var(--red);">
+                <div class="card-body">
+                    <div class="stat-icon text-danger"><i class="bi bi-scissors"></i></div>
+                    <div class="stat-value text-danger">{{ ticket_stats.critical_line_cuts }}</div>
+                    <div class="stat-label text-danger fw-bold">Critical Line Cuts</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
         <div class="card stat-card stat-card-cyan">
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-inbox-fill"></i></div>

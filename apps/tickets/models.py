@@ -3,16 +3,26 @@ from django.utils import timezone
 
 
 class Ticket(models.Model):
+    # Grouped Choices for specialized team routing
     TICKET_TYPE_CHOICES = [
-        ('new_connection', 'New Connection'),
-        ('line_cut', 'Line Cut'),
-        ('password_change', 'Password Change'),
-        ('speed_slow', 'Speed Slow'),
-        ('adapter_issue', 'Adapter Issue'),
-        ('tv_connect', 'TV Connect'),
-        ('area_coverage', 'Area Coverage Inquiry'),
-        ('line_shift', 'Line Shift'),
-        ('support_other', 'Other Support'),
+        ('Cable Team (Physical Layer)', (
+            ('line_cut', 'Fiber Cut / ONU Red Light'),
+            ('olt_down', 'OLT Down'),
+            ('mikrotik_down', 'MikroTik Down'),
+            ('line_shift', 'Line Shift'),
+            ('new_connection', 'New Line (Connection)'),
+            ('db_issue', 'DB Issue'),
+            ('pon_fluctuation', 'PON Fluctuation'),
+            ('adapter_issue', 'Adapter Issue (Field)'),
+        )),
+        ('Support Team (Logical Layer)', (
+            ('router_setup', 'Router Setup'),
+            ('speed_slow', 'Speed Issue'),
+            ('password_change', 'Password Change'),
+            ('tv_connect', 'TV Connect'),
+            ('area_coverage', 'Area Coverage Inquiry'),
+            ('support_other', 'Other Support'),
+        )),
     ]
 
     PRIORITY_CHOICES = [

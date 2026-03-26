@@ -174,6 +174,14 @@ def handle_message(chat_id, text, message_obj):
         else:
             send_telegram_message(chat_id, "Please provide a ticket ID, e.g., `/ticket 123`")
             
+    elif cmd == '/comment':
+        if len(commands) > 2:
+            ticket_id = commands[1]
+            comment_body = text.split(" ", 2)[2]  # Everything after "/comment 123 "
+            add_comment_to_ticket(chat_id, employee, ticket_id, comment_body)
+        else:
+            send_telegram_message(chat_id, "Please provide the ticket ID and your comment, e.g., `/comment 123 Customer is not home.`")
+            
     # Check if this is a "Reply" to a previous bot message
     elif 'reply_to_message' in message_obj:
         parent_text = message_obj['reply_to_message'].get('text', '')

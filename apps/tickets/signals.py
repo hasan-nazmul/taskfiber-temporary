@@ -46,8 +46,12 @@ def send_telegram_notification(sender, instance, created, **kwargs):
     safe_address = html.escape(str(address or 'N/A'))
     safe_issue = html.escape(str(issue or 'N/A'))
     
+    cable_issues = ['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']
+    team_label = "✂️ CABLING / FIELD TEAM" if instance.ticket_type in cable_issues else "💻 REMOTE SUPPORT"
+    
     message = f"{header}\n\n"
     message += f"<b>Ticket #:</b> {instance.ticket_number}\n"
+    message += f"<b>Type:</b> {instance.get_ticket_type_display()} ({team_label})\n"
     message += f"<b>Customer:</b> {safe_customer}\n"
     message += f"<b>Issue:</b> {safe_issue}\n"
     message += f"<b>Address:</b> {safe_address}\n"

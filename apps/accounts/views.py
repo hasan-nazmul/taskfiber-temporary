@@ -102,6 +102,7 @@ def dashboard(request):
             resolved_today=Count('id', filter=Q(status='resolved', resolved_at__date=today)),
             new_today=Count('id', filter=Q(created_at__date=today)),
             total_open=Count('id', filter=~Q(status__in=['resolved', 'closed', 'cancelled'])),
+            critical_line_cuts=Count('id', filter=Q(ticket_type__in=['line_cut', 'olt_down', 'db_issue']) & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
         )
         cache.set(cache_key, ticket_stats, 60)
 
