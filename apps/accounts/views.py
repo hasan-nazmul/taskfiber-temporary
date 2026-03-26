@@ -101,8 +101,9 @@ def dashboard(request):
             in_progress=Count('id', filter=Q(status='in_progress')),
             resolved_today=Count('id', filter=Q(status='resolved', resolved_at__date=today)),
             new_today=Count('id', filter=Q(created_at__date=today)),
-            total_open=Count('id', filter=~Q(status__in=['resolved', 'closed', 'cancelled'])),
-            critical_line_cuts=Count('id', filter=Q(ticket_type__in=['line_cut', 'olt_down', 'db_issue']) & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
+            critical_line_cuts=Count('id', filter=Q(ticket_type='line_cut') & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
+            cable_team_tasks=Count('id', filter=Q(ticket_type__in=['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']) & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
+            support_tasks=Count('id', filter=~Q(ticket_type__in=['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']) & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
         )
         cache.set(cache_key, ticket_stats, 60)
 

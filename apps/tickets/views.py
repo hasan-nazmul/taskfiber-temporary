@@ -86,6 +86,7 @@ def ticket_list(request):
     assigned_to = request.GET.get('assigned_to', '')
     assigned_team = request.GET.get('assigned_team', '')
     date_range = request.GET.get('date_range', '')
+    team_group = request.GET.get('team_group', '')
 
     if search:
         tickets = tickets.filter(
@@ -109,6 +110,12 @@ def ticket_list(request):
             tickets = tickets.filter(assigned_to_id=assigned_to)
     if assigned_team:
         tickets = tickets.filter(assigned_team=assigned_team)
+
+    cable_issues = ['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']
+    if team_group == 'cable':
+        tickets = tickets.filter(ticket_type__in=cable_issues)
+    elif team_group == 'support':
+        tickets = tickets.exclude(ticket_type__in=cable_issues)
 
     today = timezone.now().date()
     if date_range == 'today':
@@ -156,6 +163,7 @@ def ticket_list(request):
             'assigned_to': assigned_to,
             'assigned_team': assigned_team,
             'date_range': date_range,
+            'team_group': team_group,
         },
         'status_choices': Ticket.STATUS_CHOICES,
         'type_choices': Ticket.TICKET_TYPE_CHOICES,
@@ -177,6 +185,7 @@ def _get_filtered_tickets(request):
     assigned_to = request.GET.get('assigned_to', '')
     assigned_team = request.GET.get('assigned_team', '')
     date_range = request.GET.get('date_range', '')
+    team_group = request.GET.get('team_group', '')
     if search:
         tickets = tickets.filter(
             Q(ticket_number__icontains=search) | Q(title__icontains=search) |
@@ -196,6 +205,13 @@ def _get_filtered_tickets(request):
             tickets = tickets.filter(assigned_to_id=assigned_to)
     if assigned_team:
         tickets = tickets.filter(assigned_team=assigned_team)
+    
+    cable_issues = ['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']
+    if team_group == 'cable':
+        tickets = tickets.filter(ticket_type__in=cable_issues)
+    elif team_group == 'support':
+        tickets = tickets.exclude(ticket_type__in=cable_issues)
+
     today = timezone.now().date()
     if date_range == 'today':
         tickets = tickets.filter(created_at__date=today)
