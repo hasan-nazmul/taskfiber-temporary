@@ -83,6 +83,17 @@ def logout_view(request):
     return redirect('login')
 
 
+def forgot_password(request):
+    """
+    Renders a page instructing the user to contact their administrator
+    since password reset via email/SMS is not built-in for the ISP employee structure.
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    return render(request, 'accounts/forgot_password.html')
+
+
 @login_required
 def dashboard(request):
     from apps.tickets.models import Ticket
@@ -102,7 +113,7 @@ def dashboard(request):
             resolved_today=Count('id', filter=Q(status='resolved', resolved_at__date=today)),
             new_today=Count('id', filter=Q(created_at__date=today)),
             total_open=Count('id', filter=~Q(status__in=['resolved', 'closed', 'cancelled'])),
-            critical_line_cuts=Count('id', filter=Q(ticket_type='line_cut') & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
+            line_release_tasks=Count('id', filter=Q(ticket_type='line_release') & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
             cable_team_tasks=Count('id', filter=Q(ticket_type__in=['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']) & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
             support_tasks=Count('id', filter=~Q(ticket_type__in=['line_cut', 'olt_down', 'mikrotik_down', 'line_shift', 'new_connection', 'db_issue', 'pon_fluctuation', 'adapter_issue']) & ~Q(status__in=['resolved', 'closed', 'cancelled'])),
         )

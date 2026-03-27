@@ -2,149 +2,645 @@
 {% block title %}Schedule - TaskFiber{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
-    <div>
-        <h4>Weekly Schedule</h4>
-        <div class="subtitle">
-            {{ week_start_date|date:"M d" }} - {{ week_end_date|date:"M d, Y" }}
+<style>
+    /* Premium Redesign for Schedule View */
+    .schedule-header {
+        margin-bottom: 1.5rem;
+    }
+    .schedule-title-area {
+        display: flex;
+        flex-direction: column;
+    }
+    .schedule-title {
+        font-weight: 700;
+        font-size: 1.5rem;
+        color: var(--text-dark);
+        margin-bottom: 0.25rem;
+    }
+    .schedule-date-range {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    
+    /* Navigation Group */
+    .nav-btn-group {
+        display: inline-flex;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 4px;
+        align-items: center;
+    }
+    .nav-btn-group .btn {
+        border: none;
+        background: transparent;
+        color: #475569;
+        font-weight: 600;
+        padding: 6px 16px;
+        border-radius: 6px;
+    }
+    .nav-btn-group .btn:hover {
+        background: #e2e8f0;
+    }
+    .nav-btn-group .btn-today {
+        background: #ffffff;
+        color: #3b82f6;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .nav-btn-group .btn-today:hover {
+        background: #f8fafc;
+    }
+    
+    /* Legend */
+    .schedule-legend {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 12px 20px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+    }
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .dot-morning { background-color: #3b82f6; } /* Blue */
+    .dot-evening { background-color: #f59e0b; } /* Orange */
+    .dot-night { background-color: #a855f7; } /* Purple */
+    .dot-full { background-color: #10b981; } /* Green */
+    .dot-off { background-color: #94a3b8; } /* Gray */
+    .dot-leave { background-color: #ef4444; } /* Red */
+
+    /* Table Styles */
+    .schedule-card {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .schedule-table {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .schedule-table th {
+        background: #ffffff;
+        border-bottom: 2px solid #f1f5f9;
+        padding: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+        border-top: none;
+        vertical-align: middle;
+    }
+    .schedule-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        border-top: none;
+    }
+    
+    /* Day Headers */
+    .day-header {
+        text-align: center;
+    }
+    .day-name-bn {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.15rem;
+    }
+    .day-name-en {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Shift Blocks */
+    .shift-block {
+        border-radius: 8px;
+        padding: 10px 4px;
+        text-align: center;
+        font-weight: 700;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.15s, box-shadow 0.15s;
+        border: 1px solid transparent;
+        min-height: 54px;
+        position: relative;
+        overflow: hidden;
+    }
+    .shift-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .shift-bg-icon {
+        position: absolute;
+        right: -8px;
+        bottom: -12px;
+        font-size: 3.5rem;
+        opacity: 0.08;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .shift-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .shift-morning {
+        background-color: #eff6ff;
+        color: #2563eb;
+        border-color: #dbeafe;
+    }
+    .shift-evening {
+        background-color: #fff7ed;
+        color: #d97706;
+        border-color: #ffedd5;
+    }
+    .shift-night {
+        background-color: #faf5ff;
+        color: #9333ea;
+        border-color: #f3e8ff;
+    }
+    .shift-full {
+        background-color: #ecfdf5;
+        color: #059669;
+        border-color: #d1fae5;
+    }
+    .shift-off {
+        background-color: #f8fafc;
+        color: #94a3b8;
+        border-color: #f1f5f9;
+    }
+    .shift-leave {
+        background-color: #fef2f2;
+        color: #dc2626;
+        border-color: #fee2e2;
+    }
+    
+    .shift-bn {
+        font-size: 0.95rem;
+        margin-bottom: 0.1rem;
+    }
+    .shift-en {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.9;
+    }
+    
+    .shift-area {
+        font-size: 0.7rem;
+        font-weight: 500;
+        margin-top: 4px;
+        opacity: 0.8;
+    }
+
+    /* Avatar Column */
+    .emp-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .emp-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    .emp-name-bn {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 1rem;
+        margin-bottom: 0.1rem;
+        line-height: 1.2;
+    }
+    .emp-name-en {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .emp-col-header-en {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.1rem;
+    }
+    .emp-col-header-bn {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Today Highlight */
+    .col-today {
+        background-color: #f8fafc !important;
+        position: relative;
+    }
+    .col-today::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: #3b82f6;
+        border-radius: 3px 3px 0 0;
+    }
+
+    /* Mobile View "My Schedule" */
+    .mobile-schedule-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        border-left: 4px solid #3b82f6;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .mobile-schedule-card.off-day {
+        border-left: 4px solid #94a3b8;
+        background: #f8fafc;
+    }
+    .mobile-schedule-card.leave-day {
+        border-left: 4px solid #ef4444;
+        background: #fef2f2;
+    }
+    .mobile-date-bn {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 2px;
+    }
+    .mobile-date-en {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+    .mobile-card-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .mobile-box {
+        flex: 1;
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+    .box-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .box-val-bn {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .box-val-en {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+    .mobile-notes-box {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+
+<div class="schedule-header d-none d-xl-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="schedule-title-area">
+        <h4 class="schedule-title">কর্মসূচি তালিকা / <span class="fw-normal text-primary">Weekly Schedule</span></h4>
+        <div class="schedule-date-range">
+            {{ week_start_date|date:"M d, Y" }} - {{ week_end_date|date:"M d, Y" }}
         </div>
     </div>
-    <div class="header-actions">
-        <a href="?week={{ prev_week }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-chevron-left"></i> Prev
-        </a>
-        <a href="?week={{ current_week }}" class="btn btn-outline-primary btn-sm">
-            Today
-        </a>
-        <a href="?week={{ next_week }}" class="btn btn-outline-secondary btn-sm">
-            Next <i class="bi bi-chevron-right"></i>
-        </a>
+    
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        <!-- Navigation -->
+        <div class="nav-btn-group shadow-sm">
+            <a href="?week={{ prev_week }}" class="btn"><i class="bi bi-arrow-left-circle-fill text-secondary me-1"></i> আগের সপ্তাহ / Prev</a>
+            <a href="?week={{ current_week }}" class="btn btn-today"><i class="bi bi-calendar-check-fill text-primary me-1"></i> আজ / Today</a>
+            <a href="?week={{ next_week }}" class="btn">পরের সপ্তাহ / Next <i class="bi bi-arrow-right-circle-fill text-secondary ms-1"></i></a>
+        </div>
+        
+        <!-- Actions -->
         {% if user_access.schedule in 'edit,full' or has_admin_privileges %}
-        <a href="{% url 'schedule_assign' %}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i>Assign
+        <a href="{% url 'schedule_bulk_assign' %}" class="btn btn-primary shadow-sm" style="background-color: #ede9fe; color: #6d28d9; border: none; font-weight: 600;">
+            <i class="bi bi-person-plus-fill me-2"></i>একসাথে বরাদ্দ / Bulk Assign
         </a>
-        <a href="{% url 'schedule_bulk_assign' %}" class="btn btn-success btn-sm">
-            <i class="bi bi-people me-1"></i>Bulk Assign
-        </a>
-        <a href="{% url 'schedule_import_csv' %}" class="btn btn-outline-success btn-sm">
-            <i class="bi bi-upload me-1"></i>Import CSV
-        </a>
+        <div class="dropdown">
+            <button class="btn btn-light shadow-sm bg-white" type="button" data-bs-toggle="dropdown" style="border: 1px solid #e2e8f0; border-radius: 8px;">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                <li><a class="dropdown-item" href="{% url 'schedule_assign' %}"><i class="bi bi-plus-circle me-2 text-primary"></i>Single Assign</a></li>
+                <li><a class="dropdown-item" href="{% url 'schedule_import_csv' %}"><i class="bi bi-upload me-2 text-success"></i>Import CSV</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'schedule_export_csv' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Export CSV</a></li>
+                <li><a class="dropdown-item" href="{% url 'schedule_export_pdf' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Export PDF</a></li>
+            </ul>
+        </div>
         {% endif %}
-        <a href="{% url 'schedule_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm" title="Export CSV">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
-        </a>
-        <a href="{% url 'schedule_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm" title="Export PDF">
-            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-        </a>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-bordered mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th style="min-width: 160px;">Employee</th>
-                        {% for h in week_headers %}
-                        <th class="text-center {% if h.date == today %}table-primary{% endif %}"
-                            style="min-width: 120px;">
-                            {{ h.name }}
-                            <br>
-                            <small>{{ h.date|date:"M d" }}</small>
-                        </th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in schedule_rows %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'employee_detail' row.employee.pk %}">
-                                <strong>{{ row.employee.full_name }}</strong>
-                            </a>
-                            <br>
-                            <small class="text-muted">{{ row.employee.role.name }}</small>
-                        </td>
-                        {% for day in row.days %}
-                        <td class="text-center p-1 schedule-cell {% if day.date == today %}table-primary{% endif %}"
-                            style="cursor: pointer; vertical-align: middle;"
-                            data-emp-id="{{ row.employee.id }}"
-                            data-emp-name="{{ row.employee.full_name }}"
-                            data-date="{{ day.date|date:'Y-m-d' }}"
-                            data-date-display="{{ day.date|date:'M d, Y' }}">
+<!-- Fast Legend -->
+<div class="schedule-legend align-items-center d-none d-xl-flex">
+    <div class="legend-item"><div class="legend-dot dot-morning"></div><i class="bi bi-sunrise-fill text-primary ms-1 fs-5"></i> সকাল / Morning</div>
+    <div class="legend-item"><div class="legend-dot dot-evening"></div><i class="bi bi-sunset-fill text-warning py-0 ms-1 fs-5"></i> বিকেল / Evening</div>
+    <div class="legend-item"><div class="legend-dot dot-night"></div><i class="bi bi-moon-stars-fill ms-1 fs-5" style="color:#a855f7;"></i> রাত / Night</div>
+    <div class="legend-item"><div class="legend-dot dot-full"></div><i class="bi bi-sun-fill text-success ms-1 fs-5"></i> সারাদিন / Full Day</div>
+    <div class="legend-item"><div class="legend-dot dot-off"></div><i class="bi bi-x-circle-fill text-secondary ms-1 fs-5"></i> ছুটি / Off</div>
+    <div class="legend-item"><div class="legend-dot dot-leave"></div><i class="bi bi-airplane-engines-fill text-danger ms-1 fs-5"></i> লিভ / Leave</div>
+</div>
 
-                            {% if day.schedule %}
-                                <div class="schedule-entry"
-                                     data-schedule-id="{{ day.schedule.id }}"
-                                     data-shift="{{ day.schedule.get_shift_display }}"
-                                     data-area="{% if day.schedule.assigned_area %}{{ day.schedule.assigned_area.name }}{% endif %}"
-                                     data-notes="{{ day.schedule.notes }}">
-                                    {% if day.schedule.shift == 'morning' %}
-                                        <span class="badge bg-info text-dark d-block mb-1">
-                                            <i class="bi bi-sunrise"></i> Morning
-                                        </span>
-                                    {% elif day.schedule.shift == 'evening' %}
-                                        <span class="badge bg-warning text-dark d-block mb-1">
-                                            <i class="bi bi-sunset"></i> Evening
-                                        </span>
-                                    {% elif day.schedule.shift == 'night' %}
-                                        <span class="badge bg-dark d-block mb-1">
-                                            <i class="bi bi-moon"></i> Night
-                                        </span>
-                                    {% elif day.schedule.shift == 'full_day' %}
-                                        <span class="badge bg-primary d-block mb-1">
-                                            <i class="bi bi-sun"></i> Full Day
-                                        </span>
-                                    {% elif day.schedule.shift == 'off' %}
-                                        <span class="badge bg-secondary d-block mb-1">
-                                            <i class="bi bi-x-circle"></i> Off
-                                        </span>
-                                    {% endif %}
-                                    {% if day.schedule.assigned_area %}
-                                        <small class="text-muted d-block">
-                                            {{ day.schedule.assigned_area.name }}
-                                        </small>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-
-                            {% if day.leave %}
-                                <div class="leave-entry"
-                                     data-leave-type="{{ day.leave.get_leave_type_display }}"
-                                     data-leave-reason="{{ day.leave.reason }}"
-                                     data-leave-dates="{{ day.leave.start_date|date:'M d' }} - {{ day.leave.end_date|date:'M d' }}">
-                                    <span class="badge bg-danger bg-opacity-75 d-block">
-                                        <i class="bi bi-calendar-x me-1"></i>{{ day.leave.get_leave_type_display }}
-                                    </span>
-                                </div>
-                            {% endif %}
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            No active employees found
-                        </td>
-                    </tr>
+<!-- DESKTOP GRID VIEW -->
+<div class="schedule-card d-none d-xl-block">
+    <div class="table-responsive">
+        <table class="table schedule-table">
+            <thead>
+                <tr>
+                    <th style="min-width: 200px;">
+                        <div class="emp-col-header-en">EMPLOYEE NAME</div>
+                        <div class="emp-col-header-bn">কর্মীর নাম</div>
+                    </th>
+                    {% for h in week_headers %}
+                    <th class="day-header {% if h.date == today %}col-today{% endif %}" style="min-width: 130px; width: 11%;">
+                        <!-- Convert English day to Bengali smoothly -->
+                        {% if h.name == 'Mon' %}<div class="day-name-bn">সোমবার</div>
+                        {% elif h.name == 'Tue' %}<div class="day-name-bn">মঙ্গলবার</div>
+                        {% elif h.name == 'Wed' %}<div class="day-name-bn">বুধবার</div>
+                        {% elif h.name == 'Thu' %}<div class="day-name-bn">বৃহস্পতিবার</div>
+                        {% elif h.name == 'Fri' %}<div class="day-name-bn">শুক্রবার</div>
+                        {% elif h.name == 'Sat' %}<div class="day-name-bn">শনিবার</div>
+                        {% elif h.name == 'Sun' %}<div class="day-name-bn">রবিবার</div>
+                        {% endif %}
+                        <div class="day-name-en">{{ h.name|upper }} {{ h.date|date:"d" }}</div>
+                    </th>
                     {% endfor %}
-                </tbody>
-            </table>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in schedule_rows %}
+                <tr>
+                    <td>
+                        <a href="{% url 'employee_detail' row.employee.pk %}" class="text-decoration-none">
+                            <div class="emp-cell">
+                                <div class="emp-avatar">
+                                    {{ row.employee.user.first_name.0|default:""|upper }}{{ row.employee.user.last_name.0|default:""|upper }}
+                                </div>
+                                <div>
+                                    <div class="emp-name-bn">{{ row.employee.full_name }}</div>
+                                    <div class="emp-name-en">{{ row.employee.full_name }}</div>
+                                </div>
+                            </div>
+                        </a>
+                    </td>
+                    {% for day in row.days %}
+                    <td class="p-2 schedule-cell {% if day.date == today %}col-today{% endif %}"
+                        style="cursor: pointer;"
+                        data-emp-id="{{ row.employee.id }}"
+                        data-emp-name="{{ row.employee.full_name }}"
+                        data-date="{{ day.date|date:'Y-m-d' }}"
+                        data-date-display="{{ day.date|date:'M d, Y' }}">
+
+                        {% if day.schedule %}
+                            <div class="shift-block 
+                                {% if day.schedule.shift == 'morning' %}shift-morning
+                                {% elif day.schedule.shift == 'evening' %}shift-evening
+                                {% elif day.schedule.shift == 'night' %}shift-night
+                                {% elif day.schedule.shift == 'full_day' %}shift-full
+                                {% elif day.schedule.shift == 'off' %}shift-off
+                                {% endif %}"
+                                 data-schedule-id="{{ day.schedule.id }}"
+                                 data-shift="{{ day.schedule.get_shift_display }}"
+                                 data-area="{% if day.schedule.assigned_area %}{{ day.schedule.assigned_area.name }}{% endif %}"
+                                 data-notes="{{ day.schedule.notes }}">
+                                
+                                {% if day.schedule.shift == 'morning' %}
+                                    <i class="bi bi-sunrise-fill shift-bg-icon"></i>
+                                    <div class="shift-content">
+                                        <div class="shift-bn">সকাল</div><div class="shift-en">MORNING</div>
+                                    </div>
+                                {% elif day.schedule.shift == 'evening' %}
+                                    <i class="bi bi-sunset-fill shift-bg-icon"></i>
+                                    <div class="shift-content">
+                                        <div class="shift-bn">বিকেল</div><div class="shift-en">EVENING</div>
+                                    </div>
+                                {% elif day.schedule.shift == 'night' %}
+                                    <i class="bi bi-moon-stars-fill shift-bg-icon"></i>
+                                    <div class="shift-content">
+                                        <div class="shift-bn">রাত</div><div class="shift-en">NIGHT</div>
+                                    </div>
+                                {% elif day.schedule.shift == 'full_day' %}
+                                    <i class="bi bi-sun-fill shift-bg-icon"></i>
+                                    <div class="shift-content">
+                                        <div class="shift-bn">সারাদিন</div><div class="shift-en">FULL DAY</div>
+                                    </div>
+                                {% elif day.schedule.shift == 'off' %}
+                                    <i class="bi bi-x-circle-fill shift-bg-icon"></i>
+                                    <div class="shift-content">
+                                        <div class="shift-bn">ছুটি</div><div class="shift-en">OFF</div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if day.schedule.assigned_area %}
+                                    <div class="shift-area text-truncate px-1 mt-1 shift-content" title="{{ day.schedule.assigned_area.name }}">
+                                        {{ day.schedule.assigned_area.name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% elif day.leave %}
+                            <div class="shift-block shift-leave leave-entry"
+                                 data-leave-type="{{ day.leave.get_leave_type_display }}"
+                                 data-leave-reason="{{ day.leave.reason }}"
+                                 data-leave-dates="{{ day.leave.start_date|date:'M d' }} - {{ day.leave.end_date|date:'M d' }}">
+                                <i class="bi bi-airplane-engines-fill shift-bg-icon"></i>
+                                <div class="shift-content">
+                                    <div class="shift-bn">লিভ</div>
+                                    <div class="shift-en">{{ day.leave.get_leave_type_display|upper|slice:":8" }}</div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Empty Cell placeholder -->
+                            <div class="w-100 h-100 min-h-100" style="min-height: 54px; border-radius: 8px; border: 1px dashed rgba(0,0,0,0.05);"></div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-people mb-2" style="font-size: 2rem;"></i>
+                        <div>কোনো কর্মী পাওয়া যায়নি / No employees found</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MOBILE PERSONAL SCHEDULE VIEW -->
+<div class="d-block d-xl-none">
+    <div class="schedule-title-area mb-4">
+        <h4 class="schedule-title mb-1">আমার শিডিউল</h4>
+        <div class="schedule-date-range text-dark">
+            My Weekly Schedule &bull; {{ week_start_date|date:"M d" }} - {{ week_end_date|date:"M d, Y" }}
+        </div>
+        <div class="nav-btn-group shadow-sm mt-3 w-100 justify-content-between">
+            <a href="?week={{ prev_week }}" class="btn"><i class="bi bi-arrow-left-circle-fill text-secondary me-1"></i> Prev</a>
+            <a href="?week={{ current_week }}" class="btn btn-today flex-grow-1 text-center"><i class="bi bi-calendar-check-fill text-primary me-1"></i> আজ / Today</a>
+            <a href="?week={{ next_week }}" class="btn">Next <i class="bi bi-arrow-right-circle-fill text-secondary ms-1"></i></a>
         </div>
     </div>
-</div>
 
-<!-- Legend -->
-<div class="mt-3">
-    <small class="text-muted">
-        <span class="badge bg-info text-dark me-1"><i class="bi bi-sunrise"></i> Morning</span>
-        <span class="badge bg-warning text-dark me-1"><i class="bi bi-sunset"></i> Evening</span>
-        <span class="badge bg-dark me-1"><i class="bi bi-moon"></i> Night</span>
-        <span class="badge bg-primary me-1"><i class="bi bi-sun"></i> Full Day</span>
-        <span class="badge bg-secondary me-1"><i class="bi bi-x-circle"></i> Off</span>
-        <span class="badge bg-danger bg-opacity-75 me-1"><i class="bi bi-calendar-x"></i> Leave</span>
-    </small>
+    {% for row in schedule_rows %}
+        {% if row.employee.user == request.user %}
+            {% for day in row.days %}
+                
+                <div class="mobile-schedule-card 
+                    {% if day.schedule.shift == 'off' %}off-day
+                    {% elif day.leave %}leave-day
+                    {% elif day.date == today %}border-left-primary shadow{% endif %}"
+                    {% if day.date == today %}style="border-left-color: #2563eb;"{% endif %}>
+                    
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            {% if day.date == today %}
+                            <div class="text-primary fw-bold mb-1" style="font-size: 0.85rem;">আজ / Today</div>
+                            {% endif %}
+                            
+                            <div class="mobile-date-bn">
+                                {{ day.date|date:"j" }} 
+                                {% if day.date.month == 1 %}জানুয়ারি
+                                {% elif day.date.month == 2 %}ফেব্রুয়ারি
+                                {% elif day.date.month == 3 %}মার্চ
+                                {% elif day.date.month == 4 %}এপ্রিল
+                                {% elif day.date.month == 5 %}মে
+                                {% elif day.date.month == 6 %}জুন
+                                {% elif day.date.month == 7 %}জুলাই
+                                {% elif day.date.month == 8 %}আগস্ট
+                                {% elif day.date.month == 9 %}সেপ্টেম্বর
+                                {% elif day.date.month == 10 %}অক্টোবর
+                                {% elif day.date.month == 11 %}নভেম্বর
+                                {% elif day.date.month == 12 %}ডিসেম্বর
+                                {% endif %}, 
+                                {% if day.date.weekday == 0 %}সোমবার
+                                {% elif day.date.weekday == 1 %}মঙ্গলবার
+                                {% elif day.date.weekday == 2 %}বুধবার
+                                {% elif day.date.weekday == 3 %}বৃহস্পতিবার
+                                {% elif day.date.weekday == 4 %}শুক্রবার
+                                {% elif day.date.weekday == 5 %}শনিবার
+                                {% elif day.date.weekday == 6 %}রবিবার
+                                {% endif %}
+                            </div>
+                            <div class="mobile-date-en">{{ day.date|date:"d M, l" }}</div>
+                        </div>
+
+                        {% if day.date == today and day.schedule and day.schedule.shift != 'off' %}
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem;">ACTIVE</span>
+                        {% elif day.schedule.shift == 'off' %}
+                        <div class="text-end text-muted fw-bold">
+                            <div><i class="bi bi-x-circle me-1"></i>ছুটি</div>
+                            <div style="font-size: 0.7rem;">OFF DAY</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if day.schedule and day.schedule.shift != 'off' %}
+                        <div class="mobile-card-row">
+                            <div class="mobile-box">
+                                <div class="box-title text-primary"><i class="bi bi-clock"></i> SHIFT</div>
+                                {% if day.schedule.shift == 'morning' %}
+                                    <div class="box-val-bn">সকাল / Morning</div><div class="box-val-en">08:00 AM - 04:00 PM</div>
+                                {% elif day.schedule.shift == 'evening' %}
+                                    <div class="box-val-bn">বিকেল / Evening</div><div class="box-val-en">04:00 PM - 12:00 AM</div>
+                                {% elif day.schedule.shift == 'night' %}
+                                    <div class="box-val-bn">রাত / Night</div><div class="box-val-en">12:00 AM - 08:00 AM</div>
+                                {% elif day.schedule.shift == 'full_day' %}
+                                    <div class="box-val-bn">সারাদিন / Full Day</div><div class="box-val-en">Flexible</div>
+                                {% endif %}
+                            </div>
+                            <div class="mobile-box">
+                                <div class="box-title text-primary"><i class="bi bi-geo-alt-fill"></i> AREA</div>
+                                <div class="box-val-bn">{{ day.schedule.assigned_area.name|default:"এলাকা নেই" }}</div>
+                                <div class="box-val-en text-truncate">{{ day.schedule.assigned_area.name|default:"No Area" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-notes-box">
+                            <div class="box-title"><i class="bi bi-file-text"></i> NOTES</div>
+                            {% if day.schedule.notes %}
+                                <div style="font-size: 0.85rem; color: #334155;">{{ day.schedule.notes }}</div>
+                            {% else %}
+                                <div style="font-size: 0.85rem; color: #94a3b8; font-style: italic;">কোনো বিশেষ নোট নেই (No specific notes)</div>
+                            {% endif %}
+                        </div>
+
+                    {% elif day.leave %}
+                        <div class="mobile-box bg-danger bg-opacity-10 border-danger border border-opacity-25 mt-2">
+                            <div class="box-title text-danger"><i class="bi bi-calendar-x"></i> LEAVE</div>
+                            <div class="box-val-bn text-danger">{{ day.leave.get_leave_type_display }}</div>
+                            {% if day.leave.reason %}
+                            <div class="mt-2 text-danger opacity-75 small"><strong>Reason:</strong> {{ day.leave.reason }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                </div>
+            {% endfor %}
+            <a href="{% url 'schedule_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-primary bg-white fw-bold w-100 py-3 mb-4 rounded-3 d-flex justify-content-center align-items-center shadow-sm">
+                <i class="bi bi-download me-2 fs-5"></i> শিডিউল পিডিএফ ডাউনলোড করুন
+            </a>
+        {% endif %}
+    {% empty %}
+        <div class="text-center py-5">No schedule data available.</div>
+    {% endfor %}
+    
+    {% if has_admin_privileges %}
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-info-circle me-1"></i> Admin Note: You are viewing your personal schedule. Rotate your device or switch to a desktop to view the full company grid.
+        </div>
+    {% endif %}
 </div>
 
 <!-- Cell Detail Modal -->
@@ -152,7 +648,7 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h6 class="modal-title" id="modalTitle">Schedule Details</h6>
+                <h6 class="modal-title" id="modalTitle">Schedule Details / শিডিউল বিস্তারিত</h6>
                 <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="modalBody">
@@ -169,15 +665,15 @@
         <div class="modal-content">
             <div class="modal-body text-center py-4">
                 <i class="bi bi-exclamation-triangle text-warning fs-1 d-block mb-2"></i>
-                <p class="mb-1 fw-semibold">Delete this schedule entry?</p>
-                <small class="text-muted">This action cannot be undone.</small>
+                <p class="mb-1 fw-semibold">Delete this schedule entry? <br> <small>এই শিডিউল মুছবেন?</small></p>
+                <small class="text-muted d-block mt-2">This action cannot be undone.<br>এটি আর ফেরানো যাবে না।</small>
             </div>
             <div class="modal-footer justify-content-center py-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle-fill me-1"></i> Cancel / বাতিল</button>
                 <form id="deleteForm" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-danger">
-                        <i class="bi bi-trash me-1"></i>Delete
+                        <i class="bi bi-trash3-fill me-1"></i> Delete / মুছুন
                     </button>
                 </form>
             </div>
@@ -220,7 +716,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var empId = cell.dataset.empId;
             var dateStr = cell.dataset.date;
 
-            var scheduleEntry = cell.querySelector('.schedule-entry');
+            var scheduleEntry = cell.querySelector('.shift-block:not(.leave-entry)');
             var leaveEntry = cell.querySelector('.leave-entry');
 
             var modalTitle = document.getElementById('modalTitle');
@@ -238,12 +734,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 var notes = scheduleEntry.dataset.notes;
                 var scheduleId = scheduleEntry.dataset.scheduleId;
 
-                bodyHtml += '<div class="mb-2"><strong>Shift:</strong> ' + esc(shift) + '</div>';
+                bodyHtml += '<div class="mb-2"><strong>Shift / শিফট:</strong> ' + esc(shift) + '</div>';
                 if (area) {
-                    bodyHtml += '<div class="mb-2"><strong>Area:</strong> ' + esc(area) + '</div>';
+                    bodyHtml += '<div class="mb-2"><strong>Area / এলাকা:</strong> ' + esc(area) + '</div>';
                 }
                 if (notes) {
-                    bodyHtml += '<div class="mb-2"><strong>Notes:</strong> ' + esc(notes) + '</div>';
+                    bodyHtml += '<div class="mb-2"><strong>Notes / নোট:</strong> ' + esc(notes) + '</div>';
                 }
 
                 if (leaveEntry) {
@@ -256,11 +752,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (canEdit) {
                     showFooter = true;
-                    footerHtml += '<a href="{% url "schedule_view" %}' + esc(scheduleId) + '/edit/" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit</a>';
+                    footerHtml += '<a href="{% url "schedule_view" %}' + esc(scheduleId) + '/edit/" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square me-1"></i> Edit / এডিট</a>';
                 }
                 if (canDelete) {
                     showFooter = true;
-                    footerHtml += '<button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="' + esc(scheduleId) + '"><i class="bi bi-trash me-1"></i>Delete</button>';
+                    footerHtml += '<button type="button" class="btn btn-sm btn-outline-danger" data-delete-id="' + esc(scheduleId) + '"><i class="bi bi-trash3-fill me-1"></i> Delete / মুছুন</button>';
                 }
 
             } else if (leaveEntry) {
@@ -269,22 +765,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 var leaveDates2 = leaveEntry.dataset.leaveDates;
 
                 bodyHtml += '<div class="mb-2"><span class="badge bg-danger bg-opacity-75"><i class="bi bi-calendar-x me-1"></i>' + esc(leaveType2) + '</span></div>';
-                bodyHtml += '<div class="mb-2"><strong>Period:</strong> ' + esc(leaveDates2) + '</div>';
+                bodyHtml += '<div class="mb-2"><strong><i class="bi bi-hourglass-split text-info"></i> Period / সময়কাল:</strong> ' + esc(leaveDates2) + '</div>';
                 if (leaveReason) {
-                    bodyHtml += '<div class="mb-2"><strong>Reason:</strong> ' + esc(leaveReason) + '</div>';
+                    bodyHtml += '<div class="mb-2"><strong><i class="bi bi-info-circle-fill text-warning"></i> Reason / কারণ:</strong> ' + esc(leaveReason) + '</div>';
                 }
 
                 if (canEdit) {
                     showFooter = true;
-                    footerHtml += '<a href="{% url "schedule_assign" %}?employee=' + esc(empId) + '&date=' + esc(dateStr) + '" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-circle me-1"></i>Add Schedule</a>';
+                    footerHtml += '<a href="{% url "schedule_assign" %}?employee=' + esc(empId) + '&date=' + esc(dateStr) + '" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-circle-fill me-1"></i> Add / শিডিউল দিন</a>';
                 }
 
             } else {
-                bodyHtml += '<p class="text-muted mb-0">No schedule assigned</p>';
+                bodyHtml += '<p class="text-muted mb-0"><i class="bi bi-calendar-x me-1"></i> No schedule assigned / কোনো শিডিউল নেই</p>';
 
                 if (canEdit) {
                     showFooter = true;
-                    footerHtml += '<a href="{% url "schedule_assign" %}?employee=' + esc(empId) + '&date=' + esc(dateStr) + '" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle me-1"></i>Assign Schedule</a>';
+                    footerHtml += '<a href="{% url "schedule_assign" %}?employee=' + esc(empId) + '&date=' + esc(dateStr) + '" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle-fill me-1"></i> Assign / শিডিউল দিন</a>';
                 }
             }
 

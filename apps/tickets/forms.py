@@ -17,6 +17,7 @@ class TicketCreateForm(forms.ModelForm):
             'scheduled_date', 'scheduled_time_slot',
         ]
         widgets = {
+            'source': forms.Select(attrs={'class': 'form-select'}),
             'description': forms.Textarea(attrs={'rows': 3}),
             'contact_address': forms.Textarea(attrs={'rows': 2}),
             'work_location': forms.Textarea(attrs={'rows': 2}),
@@ -52,6 +53,7 @@ class TicketEditForm(forms.ModelForm):
             'resolution_notes',
         ]
         widgets = {
+            'source': forms.Select(attrs={'class': 'form-select'}),
             'description': forms.Textarea(attrs={'rows': 3}),
             'contact_address': forms.Textarea(attrs={'rows': 2}),
             'work_location': forms.Textarea(attrs={'rows': 2}),

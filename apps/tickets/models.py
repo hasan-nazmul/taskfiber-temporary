@@ -21,6 +21,7 @@ class Ticket(models.Model):
             ('password_change', 'Password Change'),
             ('tv_connect', 'TV Connect'),
             ('area_coverage', 'Area Coverage Inquiry'),
+            ('line_release', 'Line Release/Cancel'),
             ('support_other', 'Other Support'),
         )),
     ]

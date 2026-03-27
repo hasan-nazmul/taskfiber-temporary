@@ -4,39 +4,39 @@
 {% block content %}
 <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
-        <h4>Stock Inventory</h4>
-        <div class="subtitle">{{ items.count }} items</div>
+        <h4>স্টক ইনভেন্টরি / Stock Inventory</h4>
+        <div class="subtitle">{{ items.count }} আইটেম / items</div>
     </div>
     <div>
         <a href="{% url 'stock_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm" title="Export CSV">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>এক্সপোর্ট সিএসভি / Export CSV
         </a>
         <a href="{% url 'stock_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm" title="Export PDF">
-            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            <i class="bi bi-file-earmark-pdf me-1"></i>এক্সপোর্ট পিডিএফ / Export PDF
         </a>
         <a href="{% url 'stock_category_list' %}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-tags me-1"></i>Categories
+            <i class="bi bi-tags me-1"></i>ক্যাটাগরি / Categories
         </a>
         <a href="{% url 'stock_transactions' %}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-list-ul me-1"></i>Transactions
+            <i class="bi bi-list-ul me-1"></i>লেনদেন / Transactions
         </a>
         {% if user_access.stock in 'edit,full' or has_admin_privileges %}
         <div class="btn-group btn-group-sm">
             <a href="{% url 'stock_purchase' %}" class="btn btn-success">
-                <i class="bi bi-cart-plus me-1"></i>Purchase
+                <i class="bi bi-cart-plus me-1"></i>কেনা / Purchase
             </a>
             <a href="{% url 'stock_issue' %}" class="btn btn-warning">
-                <i class="bi bi-box-arrow-right me-1"></i>Issue
+                <i class="bi bi-box-arrow-right me-1"></i>ইস্যু / Issue
             </a>
             <a href="{% url 'stock_return' %}" class="btn btn-info">
-                <i class="bi bi-box-arrow-in-left me-1"></i>Return
+                <i class="bi bi-box-arrow-in-left me-1"></i>ফেরত / Return
             </a>
         </div>
         <a href="{% url 'stock_item_create' %}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i>Add Item
+            <i class="bi bi-plus-circle me-1"></i>আইটেম যোগ করুন / Add Item
         </a>
         <a href="{% url 'stock_import_csv' %}" class="btn btn-outline-success btn-sm">
-            <i class="bi bi-upload me-1"></i>Import CSV
+            <i class="bi bi-upload me-1"></i>ইমপোর্ট সিএসভি / Import CSV
         </a>
         {% endif %}
     </div>
@@ -49,7 +49,7 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-box-seam-fill"></i></div>
                 <div class="stat-value">{{ stats.total_items }}</div>
-                <div class="stat-label">Total Items</div>
+                <div class="stat-label">মোট আইটেম / Total Items</div>
             </div>
         </div>
     </div>
@@ -58,7 +58,7 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
                 <div class="stat-value">{{ stats.low_stock_count }}</div>
-                <div class="stat-label">Low Stock</div>
+                <div class="stat-label">কম স্টক / Low Stock</div>
             </div>
         </div>
     </div>
@@ -67,7 +67,7 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
                 <div class="stat-value">{{ stats.out_of_stock_count }}</div>
-                <div class="stat-label">Out of Stock</div>
+                <div class="stat-label">স্টক নেই / Out of Stock</div>
             </div>
         </div>
     </div>
@@ -76,7 +76,7 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
                 <div class="stat-value">৳{{ stats.total_value|floatformat:0 }}</div>
-                <div class="stat-label">Total Value</div>
+                <div class="stat-label">মোট মূল্য / Total Value</div>
             </div>
         </div>
     </div>
@@ -86,13 +86,13 @@
 <div class="filter-bar">
     <form method="get" class="row g-2 align-items-end">
         <div class="col-md-3">
-            <label class="form-label form-label-sm">Search</label>
+            <label class="form-label form-label-sm">খুঁজুন / Search</label>
             <input type="text" name="search" class="form-control form-control-sm"
-                   placeholder="Name, SKU, Brand..."
+                   placeholder="নাম, এসকেইউ, ব্র্যান্ড... / Name, SKU, Brand..."
                    value="{{ filters.search }}">
         </div>
         <div class="col-md-2">
-            <label class="form-label form-label-sm">Category</label>
+            <label class="form-label form-label-sm">ক্যাটাগরি / Category</label>
             <select name="category" class="form-select form-select-sm">
                 <option value="">All</option>
                 {% for cat in categories %}
@@ -103,7 +103,7 @@
             </select>
         </div>
         <div class="col-md-2">
-            <label class="form-label form-label-sm">Status</label>
+            <label class="form-label form-label-sm">অবস্থা / Status</label>
             <select name="status" class="form-select form-select-sm">
                 <option value="">All</option>
                 <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
@@ -114,14 +114,14 @@
             <div class="form-check mt-4">
                 <input type="checkbox" name="low_stock" value="1" class="form-check-input"
                        id="low_stock" {% if filters.low_stock %}checked{% endif %}>
-                <label class="form-check-label" for="low_stock">Low Stock Only</label>
+                <label class="form-check-label" for="low_stock" style="font-size: 0.85rem;">শুধু কম স্টক / Low Stock Only</label>
             </div>
         </div>
         <div class="col-md-2">
             <button type="submit" class="btn btn-sm btn-primary">
-                <i class="bi bi-search me-1"></i>Filter
+                <i class="bi bi-search me-1"></i>ফিল্টার / Filter
             </button>
-            <a href="{% url 'stock_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            <a href="{% url 'stock_list' %}" class="btn btn-sm btn-outline-secondary">মুছুন / Clear</a>
         </div>
     </form>
 </div>
@@ -133,15 +133,15 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>SKU</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Stock</th>
-                        <th>Unit</th>
-                        <th>Buy Price</th>
-                        <th>Sell Price</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>এসকেইউ / SKU</th>
+                        <th>নাম / Name</th>
+                        <th>ক্যাটাগরি / Category</th>
+                        <th>স্টক / Stock</th>
+                        <th>ইউনিট / Unit</th>
+                        <th>ক্রয়মূল্য / Buy Price</th>
+                        <th>বিক্রয়মূল্য / Sell Price</th>
+                        <th>অবস্থা / Status</th>
+                        <th>অ্যাকশন / Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -201,7 +201,7 @@
                     <tr>
                         <td colspan="9" class="text-center text-muted py-4">
                             <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
-                            <p class="mt-2">No stock items found</p>
+                            <p class="mt-2">কোনো স্টক আইটেম পাওয়া যায়নি / No stock items found</p>
                         </td>
                     </tr>
                     {% endfor %}

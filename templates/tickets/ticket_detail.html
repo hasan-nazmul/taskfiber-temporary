@@ -1,61 +1,174 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% block title %}{{ ticket.ticket_number }} - TaskFiber{% endblock %}
+{% block title %}{{ ticket.ticket_number }} — টিকিট বিবরণ / TaskFiber{% endblock %}
 
 {% block content %}
+<style>
+    .ticket-view-header {
+        margin-bottom: 1.5rem;
+    }
+    .badge-outline {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        font-weight: 700;
+        padding: 6px 10px;
+        border-radius: 6px;
+    }
+    .badge-pill {
+        border-radius: 50rem;
+        padding: 6px 12px;
+        font-weight: 600;
+    }
+    .header-btn {
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .btn-wa-green { background: #22c55e; color: #fff; border: none; }
+    .btn-wa-green:hover { background: #16a34a; color: #fff; }
+    .btn-white-action { background: #fff; color: #0f172a; border: 1px solid #e2e8f0; }
+    .btn-white-action:hover { background: #f8fafc; }
+    
+    .custom-tabs .nav-link {
+        color: #64748b;
+        font-weight: 600;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.5rem 0;
+        margin-right: 2rem;
+        background: transparent;
+    }
+    .custom-tabs .nav-link.active {
+        color: var(--blue);
+        border-bottom: 2px solid var(--blue);
+    }
+    
+    .info-card {
+        background: #f8fafc;
+        border: none;
+        border-radius: 12px;
+        height: 100%;
+        padding: 20px;
+    }
+    .info-card .label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+    .info-card .value { font-size: 0.95rem; font-weight: 600; color: #0f172a; }
+    
+    .customer-card-new {
+        background: #fff;
+        border: none;
+        border-radius: 12px;
+        height: 100%;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+    .customer-avatar {
+        width: 48px; height: 48px;
+        background: #38bdf8;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.5rem;
+    }
+    
+    .details-card {
+        background: #fff; border: none; border-radius: 12px;
+        padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        margin-bottom: 24px;
+    }
+    
+    .sidebar-widget {
+        background: #f8fafc;
+        border: none; border-radius: 16px;
+        padding: 20px; margin-bottom: 16px;
+    }
+    .sidebar-widget-title {
+        font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 16px; 
+    }
+    .user-pill {
+        background: #fff; border-radius: 12px; padding: 12px;
+        display: flex; align-items: center; gap: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 12px;
+    }
+    .user-avatar-img {
+        width: 40px; height: 40px; border-radius: 8px; object-fit: cover;
+    }
+    
+    /* Unified Timeline Minimal */
+    .timeline-minimal { position: relative; padding-left: 1.5rem; margin-top: 1.5rem; }
+    .timeline-minimal::before {
+        content: ''; position: absolute; left: 6px; top: 8px; bottom: 0;
+        width: 2px; background: #e2e8f0;
+    }
+    .timeline-item-min { position: relative; margin-bottom: 1.5rem; }
+    .timeline-dot {
+        position: absolute; left: -1.5rem; top: 4px;
+        width: 14px; height: 14px; border-radius: 50%;
+        background: #3b82f6; border: 3px solid #f0fdf4;
+    }
+    .timeline-dot.green { background: #10b981; }
+    .timeline-dot.purple { background: #8b5cf6; }
+    .timeline-dot.gray { background: #cbd5e1; }
+    
+    .timeline-content {
+        background: #f8fafc; border-radius: 8px; padding: 12px 16px;
+        display: flex; flex-direction: column; gap: 4px; border: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+    }
+</style>
+
 <!-- Header -->
-<div class="page-header d-flex flex-wrap justify-content-between align-items-center">
+<div class="ticket-view-header d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
-        <div class="d-flex align-items-center gap-3 mb-1">
-            <h4 class="mb-0">{{ ticket.ticket_number }}</h4>
-            <span class="badge badge-status-{{ ticket.status }}" style="font-size:0.78rem;">
-                {{ ticket.get_status_display }}
-            </span>
-            <span class="badge badge-priority-{{ ticket.priority }}" style="font-size:0.78rem;">
-                {{ ticket.get_priority_display }}
-            </span>
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+            <span class="badge badge-outline">TICKET {{ ticket.ticket_number }}</span>
+            <span class="badge badge-status-{{ ticket.status }} badge-pill">{{ ticket.get_status_display }}</span>
+            <span class="badge badge-priority-{{ ticket.priority }} badge-pill">{{ ticket.get_priority_display }}</span>
         </div>
-        <div class="subtitle">{{ ticket.title }}</div>
+        <h2 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">{{ ticket.title }}</h2>
     </div>
-    <div class="header-actions">
+    <div class="d-flex gap-2">
         {% if whatsapp_url %}
-        <a href="{{ whatsapp_url }}" target="_blank" class="btn btn-success btn-sm">
-            <i class="bi bi-whatsapp"></i> <span class="d-none d-md-inline">WhatsApp</span>
+        <a href="{{ whatsapp_url }}" target="_blank" class="header-btn btn-wa-green text-decoration-none">
+            <i class="bi bi-whatsapp"></i> 
+            <span class="d-none d-md-inline" style="line-height:1.2; text-align:left; font-size:0.8rem;">হোয়াটসঅ্যাপ / <br>WhatsApp</span>
         </a>
         {% endif %}
-        <button type="button" class="btn btn-outline-success btn-sm" data-clipboard="whatsapp-msg-content">
-            <i class="bi bi-clipboard"></i> <span class="d-none d-md-inline">Copy Message</span>
-        </button>
         {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
-        <a href="{% url 'ticket_edit' ticket.pk %}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Edit</span>
+        <a href="{% url 'ticket_edit' ticket.pk %}" class="header-btn btn-white-action text-decoration-none">
+            <i class="bi bi-pencil"></i> 
+            <span class="d-none d-md-inline" style="line-height:1.2; text-align:left; font-size:0.8rem;">এডিট / <br>Edit</span>
         </a>
         {% endif %}
-        <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> <span class="d-none d-md-inline">Back</span>
-        </a>
+        <button type="button" class="header-btn btn-white-action" data-clipboard="whatsapp-msg-content" title="Copy Message">
+            <i class="bi bi-clipboard"></i>
+        </button>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 pt-2">
     <!-- Left: Details -->
     <div class="col-lg-8">
-        <ul class="nav nav-tabs mb-4" id="ticketTabs" role="tablist">
+        <!-- Minimal Tabs -->
+        <ul class="nav custom-tabs mb-4" id="ticketTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
-                    <i class="bi bi-info-circle me-1"></i> Overview
+                    ওভারভিউ / Overview
                 </button>
             </li>
             {% if stock_used %}
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock" type="button" role="tab">
-                    <i class="bi bi-box-seam me-1"></i> Stock
+                    স্টক / Stock
                 </button>
             </li>
             {% endif %}
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
-                    <i class="bi bi-chat-dots me-1"></i> Activity
+                    অ্যাক্টিভিটি / Activity
                 </button>
             </li>
         </ul>
@@ -63,534 +176,385 @@
         <div class="tab-content" id="ticketTabsContent">
             <!-- OVERVIEW TAB -->
             <div class="tab-pane fade show active" id="overview" role="tabpanel" tabindex="0">
-        <!-- Overview -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="info-grid" style="grid-template-columns: repeat(4, 1fr);">
-                    <div class="info-item text-center">
-                        <div class="detail-label">Type</div>
-                        <span class="badge badge-type-{{ ticket.ticket_type }}">
-                            {{ ticket.get_ticket_type_display }}
-                        </span>
-                    </div>
-                    <div class="info-item text-center">
-                        <div class="detail-label">Priority</div>
-                        <span class="badge badge-priority-{{ ticket.priority }}">
-                            {{ ticket.get_priority_display }}
-                        </span>
-                    </div>
-                    <div class="info-item text-center">
-                        <div class="detail-label">Source</div>
-                        <div class="detail-value">{{ ticket.get_source_display }}</div>
-                    </div>
-                    <div class="info-item text-center">
-                        <div class="detail-label">Created</div>
-                        <div class="detail-value" style="font-size:0.8rem;">
-                            {{ ticket.created_at|date:"M d, Y" }}
-                            <br>{{ ticket.created_at|time:"h:i A" }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Customer -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-person me-2 text-primary"></i>Customer</h6>
-            </div>
-            <div class="card-body">
-                {% if ticket.customer %}
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <div class="detail-label">Name</div>
-                            <div class="detail-value">
-                                <a href="{% url 'customer_detail' ticket.customer.pk %}">
-                                    {{ ticket.customer.name }}
-                                </a>
-                                <span class="text-muted">({{ ticket.customer.customer_id }})</span>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="detail-label">Phone</div>
-                            <div class="detail-value">{{ ticket.customer.phone }}</div>
-                        </div>
-                        {% if ticket.customer.whatsapp_number %}
-                        <div>
-                            <div class="detail-label">WhatsApp</div>
-                            <div class="detail-value">
-                                <a href="https://wa.me/{{ ticket.customer.whatsapp_number }}"
-                                   target="_blank" class="text-success">
-                                    <i class="bi bi-whatsapp me-1"></i>{{ ticket.customer.whatsapp_number }}
-                                </a>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <div class="detail-label">Area</div>
-                            <div class="detail-value">{{ ticket.customer.area.name }}</div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="detail-label">Address</div>
-                            <div class="detail-value">{{ ticket.customer.address }}</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Package</div>
-                            <div class="detail-value">
-                                {{ ticket.customer.package.name }}
-                                ({{ ticket.customer.package.bandwidth_mbps }} Mbps)
+                <div class="row g-4 mb-4">
+                    <!-- Ticket Info Grid -->
+                    <div class="col-md-5">
+                        <div class="info-card">
+                            <h6 class="fw-bold mb-3" style="font-size:0.85rem; color:#475569;">টিকিট তথ্য / TICKET INFO</h6>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="label">টাইপ / TYPE</div>
+                                    <div class="value">{{ ticket.get_ticket_type_display }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="label">জোন / ZONE</div>
+                                    <div class="value">{% if ticket.area %}{{ ticket.area.name }}{% else %}-{% endif %}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="label">তৈরি হয়েছে / CREATED</div>
+                                    <div class="value">{{ ticket.created_at|date:"d F, h:i" }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="label">মাধ্যম / SOURCE</div>
+                                    <div class="value">{{ ticket.get_source_display }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                {% elif ticket.contact_name %}
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="detail-label">Contact Name</div>
-                        <div class="detail-value">{{ ticket.contact_name }}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Phone</div>
-                        <div class="detail-value">{{ ticket.contact_phone }}</div>
-                    </div>
-                </div>
-                {% if ticket.contact_address %}
-                <div class="mt-2">
-                    <div class="detail-label">Address</div>
-                    <div class="detail-value">{{ ticket.contact_address }}</div>
-                </div>
-                {% endif %}
-                <div class="alert alert-info mt-3 mb-0 py-2">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Customer not in system.
-                    <a href="{% url 'customer_create' %}">Create customer record →</a>
-                </div>
-                {% else %}
-                <div class="text-muted text-center py-2">No customer information</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Description & Details -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-card-text me-2 text-info"></i>Details</h6>
-            </div>
-            <div class="card-body">
-                {% if ticket.description %}
-                <div class="mb-3">
-                    <div class="detail-label">Description</div>
-                    <div class="p-3 rounded" style="background:#f8fafc;">
-                        {{ ticket.description|linebreaksbr }}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if ticket.line_cut_reason %}
-                <div class="alert alert-warning py-2">
-                    <strong>Line Cut Reason:</strong> {{ ticket.get_line_cut_reason_display }}
-                </div>
-                {% endif %}
-
-                <div class="row g-3">
-                    {% if ticket.work_location %}
-                    <div class="col-md-6">
-                        <div class="detail-label">Work Location</div>
-                        <div class="detail-value">{{ ticket.work_location }}</div>
-                    </div>
-                    {% endif %}
-                    {% if ticket.area %}
-                    <div class="col-md-3">
-                        <div class="detail-label">Area</div>
-                        <div class="detail-value">{{ ticket.area.name }}</div>
-                    </div>
-                    {% endif %}
-                    {% if ticket.scheduled_date %}
-                    <div class="col-md-3">
-                        <div class="detail-label">Scheduled</div>
-                        <div class="detail-value">
-                            <i class="bi bi-calendar me-1 text-muted"></i>{{ ticket.scheduled_date|date:"M d, Y" }}
-                            {% if ticket.scheduled_time_slot %}
-                                <br><i class="bi bi-clock me-1 text-muted"></i>{{ ticket.scheduled_time_slot }}
+                    <!-- Customer Card -->
+                    <div class="col-md-7">
+                        <div class="customer-card-new">
+                            {% if ticket.customer %}
+                            <div class="d-flex align-items-start gap-3 mb-3">
+                                <div class="customer-avatar"><i class="bi bi-person-fill"></i></div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="{% url 'customer_detail' ticket.customer.pk %}" class="fw-bold fs-5 text-dark text-decoration-none">{{ ticket.customer.name }}</a>
+                                        <span class="badge bg-success-subtle text-success rounded-pill" style="font-size:0.65rem;">সক্রিয় / ACTIVE</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.8rem;">Customer ID: {{ ticket.customer.customer_id }}</div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-2 text-muted" style="font-size:0.85rem;">
+                                <div><i class="bi bi-telephone text-secondary me-2"></i>{{ ticket.customer.phone }}</div>
+                                {% if ticket.customer.address %}
+                                <div><i class="bi bi-geo-alt text-secondary me-2"></i>{{ ticket.customer.address }}</div>
+                                {% endif %}
+                            </div>
+                            {% elif ticket.contact_name %}
+                            <div class="d-flex align-items-start gap-3 mb-3">
+                                <div class="customer-avatar bg-secondary"><i class="bi bi-person"></i></div>
+                                <div>
+                                    <div class="fw-bold fs-5 text-dark">{{ ticket.contact_name }}</div>
+                                    <div class="text-muted" style="font-size:0.8rem;">New Lead</div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-2 text-muted" style="font-size:0.85rem;">
+                                <div><i class="bi bi-telephone text-secondary me-2"></i>{{ ticket.contact_phone }}</div>
+                                {% if ticket.contact_address %}
+                                <div><i class="bi bi-geo-alt text-secondary me-2"></i>{{ ticket.contact_address }}</div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="text-muted text-center py-4">No customer information</div>
                             {% endif %}
                         </div>
                     </div>
+                </div>
+
+                <!-- Problem Details -->
+                <div class="details-card">
+                    <h6 class="fw-bold mb-3">বিস্তারিত / Problem Details</h6>
+                    {% if ticket.description %}
+                    <p class="mb-0 text-muted" style="line-height:1.6; font-size:0.95rem;">
+                        {{ ticket.description|linebreaksbr }}
+                    </p>
+                    {% else %}
+                    <p class="mb-0 text-muted fst-italic">কোন বিবরণ নেই / No description provided.</p>
+                    {% endif %}
+                    
+                    {% if ticket.line_cut_reason %}
+                    <div class="alert alert-warning py-2 mt-3 mb-0">
+                        <strong>Line Cut Reason:</strong> {{ ticket.get_line_cut_reason_display }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if ticket.work_location %}
+                    <div class="mt-3 pt-3 border-top">
+                        <span class="fw-bold text-dark d-block" style="font-size:0.85rem;">Work Location / কাজের স্থান</span>
+                        <div class="text-muted" style="font-size:0.95rem;">{{ ticket.work_location }}</div>
+                    </div>
                     {% endif %}
                 </div>
-            </div>
-        </div>
 
-        <!-- Resolution -->
-        {% if ticket.status == 'resolved' or ticket.status == 'closed' %}
-        <div class="card mb-4" style="border-color: var(--green);">
-            <div class="card-header" style="background: var(--green-light);">
-                <h6><i class="bi bi-check-circle me-2 text-success"></i>Resolution</h6>
-            </div>
-            <div class="card-body">
-                {% if ticket.resolution_notes %}
-                <p>{{ ticket.resolution_notes|linebreaksbr }}</p>
-                {% endif %}
-                <small class="text-muted">
-                    Resolved by {{ ticket.resolved_by.full_name|default:"Unknown" }}
-                    on {{ ticket.resolved_at|date:"M d, Y h:i A" }}
-                </small>
-            </div>
-        </div>
-        {% endif %}
+                <!-- Recent Activity in Overview -->
+                <div class="mt-4 details-card">
+                    <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history"></i> সাম্প্রতিক কার্যক্রম / Recent Activity
+                    </h6>
+                    <div class="timeline-minimal">
+                        {% for item in timeline|slice:":5" %}
+                        <div class="timeline-item-min">
+                            {% if item.type == 'status_change' %}
+                            <div class="timeline-dot blue"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>অবস্থা পরিবর্তন / Status Updated</strong><br>
+                                        <span class="text-muted">
+                                        {% if not item.obj.old_status %}
+                                            টিকিট তৈরি করা হয়েছে।
+                                        {% else %}
+                                            "{{ item.obj.old_status }}" থেকে "{{ item.obj.new_status }}" অবস্থায় পরিবর্তন করা হয়েছে।
+                                        {% endif %}
+                                        </span>
+                                        {% if item.obj.notes and item.obj.notes != 'Ticket created' %}
+                                        <div class="mt-1" style="font-size:0.85rem; color:#475569;"><i class="bi bi-info-circle me-1"></i>{{ item.obj.notes }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-muted text-nowrap" style="font-size:0.75rem;">{{ item.obj.created_at|timesince }} আগে</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 mt-2">
+                                    <span class="badge bg-secondary rounded-circle d-flex align-items-center p-1" style="width:20px;height:20px;"><i class="bi bi-person"></i></span>
+                                    <strong>{{ item.obj.changed_by.full_name }}</strong>
+                                </div>
+                            </div>
+                            {% elif item.type == 'stock_used' %}
+                            <div class="timeline-dot green"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>ইনভেন্টরি যোগ / Stock Used</strong><br>
+                                        <div class="d-flex align-items-center gap-2 mt-2 bg-white px-3 py-2 border rounded">
+                                            <i class="bi bi-sliders text-success"></i>
+                                            <div>
+                                                <div class="fw-bold text-dark" style="font-size:0.85rem;">{{ item.obj.stock_item.name }}</div>
+                                                <div class="text-muted">পরিমাণ: {{ item.obj.quantity_used }} পিস</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted text-nowrap" style="font-size:0.75rem;">{{ item.obj.created_at|timesince }} আগে</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 mt-2">
+                                    <span class="badge bg-secondary rounded-circle d-flex align-items-center p-1" style="width:20px;height:20px;"><i class="bi bi-person"></i></span>
+                                    <strong>{{ item.obj.added_by.full_name }}</strong>
+                                </div>
+                            </div>
+                            {% elif item.type == 'comment' %}
+                            <div class="timeline-dot purple"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>মন্তব্য / Comment added</strong>
+                                        {% if item.obj.is_internal %}<span class="badge bg-light border text-muted ms-1" style="font-size:0.6rem;">Internal</span>{% endif %}
+                                        <br>
+                                        <span class="text-muted d-block mt-1" style="line-height:1.4;">"{{ item.obj.comment|linebreaksbr }}"</span>
+                                    </div>
+                                    <span class="text-muted text-nowrap" style="font-size:0.75rem;">{{ item.obj.created_at|timesince }} আগে</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1 mt-2">
+                                    <span class="badge bg-secondary rounded-circle d-flex align-items-center p-1" style="width:20px;height:20px;"><i class="bi bi-person"></i></span>
+                                    <strong>{{ item.obj.author.full_name }}</strong>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <div class="text-muted py-2 fst-italic">No recent activity.</div>
+                        {% endfor %}
+                    </div>
+                </div>
 
             </div> <!-- End overview tab -->
 
             <!-- STOCK TAB -->
             {% if stock_used %}
             <div class="tab-pane fade" id="stock" role="tabpanel" tabindex="0">
-        <!-- Stock Used -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-box-seam me-2 text-warning"></i>Stock Used</h6>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Qty</th>
-                            <th>Added By</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for su in stock_used %}
-                        <tr>
-                            <td>{{ su.stock_item.name }}</td>
-                            <td><strong>{{ su.quantity_used }}</strong></td>
-                            <td><small>{{ su.added_by.full_name }}</small></td>
-                            <td><small class="text-muted">{{ su.created_at|date:"M d, h:i A" }}</small></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-            </div> <!-- End stock tab -->
-        {% endif %}
-
-            <!-- COMMENTS TAB -->
-            <div class="tab-pane fade" id="comments" role="tabpanel" tabindex="0">
-        <!-- Comments & Activity -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="bi bi-git me-2 text-purple"></i>Activity Timeline</h6>
-                <div class="btn-group btn-group-sm">
-                    <a href="?sort=desc#comments" class="btn btn-outline-secondary {% if sort_order == 'desc' %}active{% endif %}" title="Newest First">
-                        <i class="bi bi-sort-down"></i>
-                    </a>
-                    <a href="?sort=asc#comments" class="btn btn-outline-secondary {% if sort_order == 'asc' %}active{% endif %}" title="Oldest First">
-                        <i class="bi bi-sort-up"></i>
-                    </a>
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Item</th>
+                                    <th>Qty</th>
+                                    <th>Added By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for su in stock_used %}
+                                <tr>
+                                    <td class="ps-4">{{ su.stock_item.name }}</td>
+                                    <td><strong>{{ su.quantity_used }}</strong></td>
+                                    <td><small>{{ su.added_by.full_name }}</small></td>
+                                    <td><small class="text-muted">{{ su.created_at|date:"M d, h:i A" }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            <div class="card-body">
-                <style>
-                    .commit-timeline {
-                        position: relative;
-                        padding-left: 1rem;
-                        margin-bottom: 2rem;
-                    }
-                    .commit-timeline::before {
-                        content: '';
-                        position: absolute;
-                        left: 17px;
-                        top: 0;
-                        bottom: 0;
-                        width: 2px;
-                        background: #e2e8f0;
-                    }
-                    .commit-item {
-                        position: relative;
-                        padding-left: 2rem;
-                        margin-bottom: 1.5rem;
-                    }
-                    .commit-icon {
-                        position: absolute;
-                        left: -5px;
-                        top: 4px;
-                        width: 14px;
-                        height: 14px;
-                        border-radius: 50%;
-                        background: #fff;
-                        border: 2px solid #cbd5e1;
-                        z-index: 1;
-                    }
-                    .commit-icon.comment { border-color: #8b5cf6; }
-                    .commit-icon.status { border-color: #f59e0b; }
-                    .commit-icon.stock { border-color: #10b981; }
-                    
-                    .commit-card {
-                        background: #f8fafc;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 6px;
-                        padding: 12px 16px;
-                    }
-                    .commit-meta {
-                        font-size: 0.8rem;
-                        color: #64748b;
-                        margin-bottom: 4px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    .commit-meta strong {
-                        color: #0f172a;
-                    }
-                    .commit-body {
-                        font-size: 0.85rem;
-                        color: #334155;
-                    }
-                </style>
-                <!-- Add Comment -->
-                <form method="post" class="mb-4">
-                    {% csrf_token %}
-                    <div class="mb-2">
-                        <textarea name="comment" class="form-control" rows="3"
-                                  placeholder="Add a comment or note..."></textarea>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="form-check d-none">
-                            <input type="checkbox" name="is_internal" class="form-check-input"
-                                   id="commentInternal" checked>
-                            <label class="form-check-label" for="commentInternal" style="font-size:0.82rem;">
-                                Internal note
-                            </label>
+            </div> <!-- End stock tab -->
+            {% endif %}
+
+            <!-- ACTIVITY TAB -->
+            <div class="tab-pane fade" id="comments" role="tabpanel" tabindex="0">
+                <div class="details-card">
+                    <h6 class="fw-bold mb-3">Add Note / Activity</h6>
+                    <form method="post" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment or note..."></textarea>
                         </div>
-                        <button type="submit" name="add_comment" class="btn btn-sm btn-primary">
-                            <i class="bi bi-send me-1"></i>Comment
-                        </button>
-                    </div>
-                </form>
-
-                <hr>
-
-                <!-- Unified Timeline -->
-                <div class="commit-timeline">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check d-none">
+                                <input type="checkbox" name="is_internal" class="form-check-input" id="commentInternal" checked>
+                                <label class="form-check-label" for="commentInternal" style="font-size:0.82rem;">Internal note</label>
+                            </div>
+                            <button type="submit" name="add_comment" class="btn btn-primary px-4">
+                                <i class="bi bi-send me-1"></i> Submit
+                            </button>
+                        </div>
+                    </form>
+                    <hr>
+                    <!-- Show all timeline items as a backup list. Since timeline is already visible in overview, we just list full history here. -->
                     {% for item in timeline %}
-                    
-                    {% if item.type == 'comment' %}
-                    <div class="commit-item">
-                        <div class="commit-icon comment"></div>
-                        <div class="commit-card">
-                            <div class="commit-meta">
-                                <div>
-                                    <strong>{{ item.obj.author.full_name }}</strong> commented
-                                    {% if item.obj.is_internal %}
-                                    <span class="badge" style="background:#f3f4f6; color:#6b7280; font-size:0.6rem; margin-left:4px;">Internal</span>
-                                    {% endif %}
-                                </div>
-                                <span>{{ item.obj.created_at|timesince }} ago</span>
-                            </div>
-                            <div class="commit-body">
-                                {{ item.obj.comment|linebreaksbr }}
-                            </div>
+                        <div class="mb-2 p-2 border-bottom">
+                            <small class="fw-bold">{{ item.type|title }}</small> - <small class="text-muted">{{ item.obj.created_at|timesince }} ago</small><br>
+                            {% if item.type == 'comment' %}{{ item.obj.comment }}{% endif %}
+                            {% if item.type == 'status_change' %}Status: {{ item.obj.old_status }} ➔ {{ item.obj.new_status }}{% endif %}
+                            {% if item.type == 'stock_used' %}Stock: +{{ item.obj.quantity_used }} {{ item.obj.stock_item.name }}{% endif %}
                         </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if item.type == 'status_change' %}
-                    <div class="commit-item">
-                        <div class="commit-icon status" {% if not item.obj.old_status %}style="border-color: #3b82f6;"{% endif %}></div>
-                        <div class="commit-card" {% if not item.obj.old_status %}style="background: #eff6ff; border-color: #bfdbfe;"{% else %}style="background: #fffbeb; border-color: #fde68a;"{% endif %}>
-                            <div class="commit-meta">
-                                <div>
-                                    <strong>{{ item.obj.changed_by.full_name }}</strong> 
-                                    {% if not item.obj.old_status %}
-                                    created ticket
-                                    {% else %}
-                                    changed status
-                                    {% endif %}
-                                </div>
-                                <span>{{ item.obj.created_at|timesince }} ago</span>
-                            </div>
-                            <div class="commit-body d-flex align-items-center gap-2">
-                                {% if not item.obj.old_status %}
-                                <span class="badge badge-status-{{ item.obj.new_status }}">{{ item.obj.new_status }}</span>
-                                {% if item.obj.notes and item.obj.notes != 'Ticket created' %}
-                                <span class="ms-2 text-muted" style="border-left: 1px solid #bfdbfe; padding-left: 8px;">{{ item.obj.notes }}</span>
-                                {% endif %}
-                                {% else %}
-                                <span class="badge badge-status-{{ item.obj.old_status }}">{{ item.obj.old_status }}</span>
-                                <i class="bi bi-arrow-right text-muted"></i>
-                                <span class="badge badge-status-{{ item.obj.new_status }}">{{ item.obj.new_status }}</span>
-                                {% if item.obj.notes %}
-                                <span class="ms-2 text-muted" style="border-left: 1px solid #fde68a; padding-left: 8px;">{{ item.obj.notes }}</span>
-                                {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if item.type == 'stock_used' %}
-                    <div class="commit-item">
-                        <div class="commit-icon stock"></div>
-                        <div class="commit-card" style="background: #ecfdf5; border-color: #a7f3d0;">
-                            <div class="commit-meta">
-                                <div>
-                                    <strong>{{ item.obj.added_by.full_name }}</strong> added stock usage
-                                </div>
-                                <span>{{ item.obj.created_at|timesince }} ago</span>
-                            </div>
-                            <div class="commit-body font-monospace">
-                                + {{ item.obj.quantity_used }}x {{ item.obj.stock_item.name }}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% empty %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="bi bi-clock-history d-block mb-2" style="font-size:1.5rem;"></i>
-                        No activity recorded yet
-                    </div>
                     {% endfor %}
                 </div>
-            </div>
-        </div>
             </div> <!-- End comments tab -->
+            
         </div> <!-- End tab content -->
     </div>
 
     <!-- Right Sidebar -->
     <div class="col-lg-4">
-        <!-- Assignment -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-person-check me-2 text-warning"></i>Assignment</h6>
+        
+        <!-- Assignment Widget -->
+        <div class="sidebar-widget">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="sidebar-widget-title mb-0">অ্যাসাইনমেন্ট / ASSIGNMENT</div>
+                {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+                <a href="#" class="text-decoration-none text-primary fw-bold" style="font-size:0.8rem;" data-bs-toggle="collapse" data-bs-target="#assignForm">বদলান / Change</a>
+                {% endif %}
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <div class="detail-label">Team</div>
-                    <div class="detail-value">{{ ticket.assigned_team.name|default:"Not assigned" }}</div>
+            
+            <div class="user-pill">
+                {% if ticket.assigned_to %}
+                <div class="user-avatar-img bg-warning d-flex align-items-center justify-content-center text-dark fs-5 fw-bold">
+                    <img src="https://ui-avatars.com/api/?name={{ ticket.assigned_to.full_name|urlencode }}&background=f59e0b&color=fff&rounded=true" alt="User" class="img-fluid rounded" style="width:40px; height:40px;">
                 </div>
-                <div class="mb-3">
-                    <div class="detail-label">Assigned To</div>
-                    <div class="detail-value">
-                        {% if ticket.assigned_to %}
-                            <a href="{% url 'employee_detail' ticket.assigned_to.pk %}">
-                                {{ ticket.assigned_to.full_name }}
-                            </a>
-                            {% if ticket.assigned_to.whatsapp_number %}
-                            <br>
-                            <a href="https://wa.me/{{ ticket.assigned_to.whatsapp_number }}"
-                               target="_blank" class="text-success" style="font-size:0.8rem;">
-                                <i class="bi bi-whatsapp"></i> {{ ticket.assigned_to.whatsapp_number }}
-                            </a>
-                            {% endif %}
-                        {% else %}
-                            <span class="badge" style="background:var(--red-light); color:var(--red);">Unassigned</span>
+                <div>
+                    <div class="fw-bold text-dark">{{ ticket.assigned_to.full_name }}</div>
+                    <div class="text-muted" style="font-size:0.75rem; letter-spacing:0.3px;">
+                        <span class="text-primary fw-bold">{{ ticket.assigned_to.role.name|upper }}</span>
+                        {% if ticket.assigned_to.whatsapp_number %}
+                           • <a href="https://wa.me/{{ ticket.assigned_to.whatsapp_number }}" target="_blank" class="text-success text-decoration-none"><i class="bi bi-whatsapp"></i> {{ ticket.assigned_to.whatsapp_number }}</a>
                         {% endif %}
                     </div>
                 </div>
-                {% if ticket.assigned_at %}
-                <small class="text-muted">Assigned {{ ticket.assigned_at|timesince }} ago</small>
-                <hr>
-                {% endif %}
-
-                <!-- Assign Form -->
-                {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
-                <form method="post">
-                    {% csrf_token %}
-                    {{ assign_form.assigned_team|as_crispy_field }}
-                    {{ assign_form.assigned_to|as_crispy_field }}
-                    {{ assign_form.notes|as_crispy_field }}
-                    <button type="submit" name="assign_ticket" class="btn btn-primary btn-sm w-100">
-                        <i class="bi bi-person-check me-1"></i>Update Assignment
-                    </button>
-                </form>
+                {% else %}
+                <div class="user-avatar-img bg-secondary d-flex align-items-center justify-content-center text-white fs-5 fw-bold">
+                    <i class="bi bi-person"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-dark">Not Assigned</div>
+                    <div class="text-muted" style="font-size:0.75rem;">TEAM: {{ ticket.assigned_team.name|default:"-" }}</div>
+                </div>
                 {% endif %}
             </div>
+
+            {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+            <div class="collapse mt-2" id="assignForm">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ assign_form|crispy }}
+                    <button type="submit" name="assign_ticket" class="btn btn-primary btn-sm w-100 mt-2">Update</button>
+                </form>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- Status Change -->
+        <!-- Status Change Widget -->
         {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-arrow-repeat me-2 text-info"></i>Change Status</h6>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {{ status_form.status|as_crispy_field }}
-                    {{ status_form.notes|as_crispy_field }}
-                    <div id="resolution-group">
-                        {{ status_form.resolution_notes|as_crispy_field }}
-                    </div>
-                    <button type="submit" name="change_status" class="btn btn-warning btn-sm w-100">
-                        <i class="bi bi-arrow-repeat me-1"></i>Update Status
-                    </button>
-                </form>
-            </div>
+        <div class="sidebar-widget bg-white border shadow-sm">
+            <div class="sidebar-widget-title">অবস্থা আপডেট / Update Status</div>
+            <form method="post">
+                {% csrf_token %}
+                <label class="form-label" style="font-size:0.7rem; font-weight:700; color:#64748b;">নতুন অবস্থা / NEW STATUS</label>
+                <!-- the view will output crispy fields for select box, but since we want custom styling, lets rely on crispy field layout but wrapped -->
+                {{ status_form.status|as_crispy_field }}
+                
+                <div class="mt-2">{{ status_form.notes|as_crispy_field }}</div>
+                <div id="resolution-group" class="mt-2 d-none">
+                    {{ status_form.resolution_notes|as_crispy_field }}
+                </div>
+                
+                <button type="submit" name="change_status" class="btn btn-primary w-100 fw-bold py-2 mt-3" style="border-radius:10px;">
+                    আপডেট করুন / Update
+                </button>
+            </form>
         </div>
         {% endif %}
 
-        <!-- Add Stock -->
+        <!-- Add Stock Widget -->
         {% if user_access.stock in 'edit,full' or has_admin_privileges %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-box-seam me-2 text-success"></i>Add Stock Usage</h6>
+        <div class="sidebar-widget">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="sidebar-widget-title mb-0">মালামাল যোগ / Add Stock</div>
+                <button type="button" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width:28px; height:28px; padding:0;" data-bs-toggle="collapse" data-bs-target="#stockForm">
+                    <i class="bi bi-plus"></i>
+                </button>
             </div>
-            <div class="card-body">
+            <p class="text-muted mb-3" style="font-size:0.8rem;">ব্যবহৃত ফাইবার, প্যাচ কর্ড বা অন্য টুলস যোগ করুন।</p>
+            
+            <button type="button" class="btn border bg-white text-dark w-100 py-2 fw-bold" style="border-radius:10px;" data-bs-toggle="collapse" data-bs-target="#stockForm">
+                আইটেম নির্বাচন করুন / Select Item
+            </button>
+            
+            <div class="collapse mt-3" id="stockForm">
                 <form method="post">
                     {% csrf_token %}
                     {{ stock_form|crispy }}
-                    <button type="submit" name="add_stock" class="btn btn-success btn-sm w-100">
-                        <i class="bi bi-plus-circle me-1"></i>Add Stock
-                    </button>
+                    <button type="submit" name="add_stock" class="btn btn-success btn-sm w-100 mt-2">স্টক যোগ করুন / Add</button>
                 </form>
             </div>
         </div>
         {% endif %}
 
-        <!-- Meta -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="bi bi-info-circle me-2 text-muted"></i>Details</h6>
+        <!-- WhatsApp Preview Widget -->
+        <div class="sidebar-widget p-0 overflow-hidden bg-white shadow-sm border" style="border-radius: 16px;">
+            <div class="p-3 d-flex align-items-center gap-2" style="background:#075e54; color:white;">
+                <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center" style="width:36px; height:36px;">
+                    <i class="bi bi-person-fill fs-5"></i>
+                </div>
+                <div style="line-height:1.2;">
+                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.8);">WhatsApp Preview</div>
+                    <div class="fw-bold" style="font-size:0.9rem;">{{ ticket.customer.name|default:ticket.contact_name|default:"Customer" }}</div>
+                </div>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-sm text-white border-0" data-clipboard="whatsapp-msg-content"><i class="bi bi-clipboard"></i></button>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="mb-2">
-                    <div class="detail-label">Created By</div>
-                    <div class="detail-value">
-                        {{ ticket.created_by.full_name }}
-                        <br><small class="text-muted">{{ ticket.created_at|date:"M d, Y h:i A" }}</small>
-                    </div>
+            
+            <div class="p-3" style="background:#efeae2; min-height: 150px;">
+                <div class="bg-white p-3 rounded shadow-sm" style="border-radius:0 12px 12px 12px; font-size:0.85rem;" id="whatsapp-msg-content">
+                    {{ whatsapp_msg|linebreaksbr }}
                 </div>
-                <div class="mb-2">
-                    <div class="detail-label">Last Updated</div>
-                    <div class="detail-value">
-                        <small class="text-muted">{{ ticket.updated_at|date:"M d, Y h:i A" }}</small>
-                    </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 bg-white rounded-pill px-3 py-2">
+                    <span class="text-muted" style="font-size:0.8rem;">Type a message</span>
+                    <i class="bi bi-send-fill text-success"></i>
                 </div>
-                {% if ticket.closed_at %}
-                <div>
-                    <div class="detail-label">Closed</div>
-                    <div class="detail-value">
-                        <small class="text-muted">{{ ticket.closed_at|date:"M d, Y h:i A" }}</small>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
 
-        <!-- WhatsApp Preview -->
-        <div class="card">
-            <div class="card-header">
-                <h6><i class="bi bi-whatsapp me-2 text-success"></i>Message Preview</h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="whatsapp-preview m-3" id="whatsapp-msg-content">{{ whatsapp_msg }}</div>
-            </div>
-        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find crispy select and apply custom form control adjustments if necessary.
+        // It's mostly ready by default in django-crispy-forms.
+        
+        const statusSelect = document.querySelector('select[name="status"]');
+        const resolutionGroup = document.getElementById('resolution-group');
+        
+        if (statusSelect) {
+            function toggleResolution() {
+                if (statusSelect.value === 'resolved' || statusSelect.value === 'closed') {
+                    resolutionGroup.classList.remove('d-none');
+                } else {
+                    resolutionGroup.classList.add('d-none');
+                }
+            }
+            statusSelect.addEventListener('change', toggleResolution);
+            toggleResolution(); // initial check
+        }
+    });
+</script>
 {% endblock %}

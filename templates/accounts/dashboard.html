@@ -1,58 +1,72 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - TaskFiber{% endblock %}
+{% block title %}হোম / Dashboard - TaskFiber{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
 <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
-        <h4>Dashboard</h4>
+        <h4>🏠 হোম (Home)</h4>
         <div class="subtitle">
             <i class="bi bi-calendar3 me-1"></i>{% now "l, F d, Y" %}
         </div>
     </div>
-    <div class="header-actions">
+    <div class="header-actions d-none d-md-flex">
         {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
         <a href="{% url 'ticket_create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> New Ticket
+            <i class="bi bi-plus-lg"></i> নতুন টিকিট / New Ticket
         </a>
         {% endif %}
     </div>
 </div>
 
-<!-- Team Task Quick Links -->
-<div class="row mb-4 pt-2">
-    <div class="col-12">
-        <div class="d-flex flex-wrap gap-3">
-            <a href="{% url 'ticket_list' %}?team_group=cable&status=unresolved" class="btn btn-outline-primary fw-bold shadow-sm d-flex align-items-center">
-                <i class="bi bi-tools me-2 fs-5"></i> 
-                <span>Cable Team Tasks
-                    <span class="badge bg-primary ms-2 rounded-pill">{{ ticket_stats.cable_team_tasks }}</span>
-                </span>
-            </a>
-            <a href="{% url 'ticket_list' %}?team_group=support&status=unresolved" class="btn btn-outline-info fw-bold shadow-sm text-dark d-flex align-items-center">
-                <i class="bi bi-headset me-2 fs-5"></i> 
-                <span>Support Tasks
-                    <span class="badge bg-info text-dark ms-2 rounded-pill">{{ ticket_stats.support_tasks }}</span>
-                </span>
-            </a>
-            <a href="{% url 'ticket_list' %}?ticket_type=line_cut&status=unresolved" class="btn btn-outline-danger fw-bold shadow-sm d-flex align-items-center">
-                <i class="bi bi-scissors me-2 fs-5"></i> 
-                <span>Line Cuts 
-                    <span class="badge bg-danger ms-2 rounded-pill">{{ ticket_stats.critical_line_cuts }}</span>
-                </span>
-            </a>
+<!-- Hero Team Task Cards -->
+<div class="hero-team-cards mb-4">
+    <a href="{% url 'ticket_list' %}?team_group=cable&status=unresolved" class="hero-team-card hero-card-cable">
+        <div class="hero-icon"><i class="bi bi-tools"></i></div>
+        <div class="hero-text">
+            <span class="label-bn">ক্যাবল টিম টাস্ক</span>
+            <span class="label-en">CABLE TEAM</span>
         </div>
-    </div>
+        {% if ticket_stats.cable_team_tasks %}
+        <span class="hero-badge">{{ ticket_stats.cable_team_tasks }}টি কাজ</span>
+        {% endif %}
+        <i class="bi bi-chevron-right hero-chevron"></i>
+    </a>
+    <a href="{% url 'ticket_list' %}?team_group=support&status=unresolved" class="hero-team-card hero-card-support">
+        <div class="hero-icon"><i class="bi bi-headset"></i></div>
+        <div class="hero-text">
+            <span class="label-bn">সাপোর্ট টাস্ক</span>
+            <span class="label-en">SUPPORT TASKS</span>
+        </div>
+        {% if ticket_stats.support_tasks %}
+        <span class="hero-badge">{{ ticket_stats.support_tasks }}টি কাজ</span>
+        {% endif %}
+        <i class="bi bi-chevron-right hero-chevron"></i>
+    </a>
+    <a href="{% url 'ticket_list' %}?ticket_type=line_release&status=unresolved" class="hero-team-card hero-card-device">
+        <div class="hero-icon"><i class="bi bi-box-arrow-right"></i></div>
+        <div class="hero-text">
+            <span class="label-bn">লাইন বাতিল / রিলিজ</span>
+            <span class="label-en">LINE RELEASE</span>
+        </div>
+        {% if ticket_stats.line_release_tasks %}
+        <span class="hero-badge">{{ ticket_stats.line_release_tasks }}টি এলাকা</span>
+        {% endif %}
+        <i class="bi bi-chevron-right hero-chevron"></i>
+    </a>
 </div>
 
 <!-- Stat Cards -->
-<div class="row g-3 mb-3">
+<div class="row g-3 mb-3 stat-grid-mobile">
     <div class="col-6 col-md-4 col-xl-2">
         <div class="card stat-card stat-card-cyan">
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-inbox-fill"></i></div>
                 <div class="stat-value">{{ ticket_stats.open }}</div>
-                <div class="stat-label">Open</div>
+                <div class="stat-label">
+                    <span class="label-bn" style="font-size:.72rem;">খোলা</span>
+                    <span class="label-en" style="font-size:.58rem;">OPEN</span>
+                </div>
             </div>
         </div>
     </div>
@@ -61,7 +75,10 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-person-check-fill"></i></div>
                 <div class="stat-value">{{ ticket_stats.assigned }}</div>
-                <div class="stat-label">Assigned</div>
+                <div class="stat-label">
+                    <span class="label-bn" style="font-size:.72rem;">বরাদ্দকৃত</span>
+                    <span class="label-en" style="font-size:.58rem;">ASSIGNED</span>
+                </div>
             </div>
         </div>
     </div>
@@ -70,7 +87,10 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-gear-fill"></i></div>
                 <div class="stat-value">{{ ticket_stats.in_progress }}</div>
-                <div class="stat-label">In Progress</div>
+                <div class="stat-label">
+                    <span class="label-bn" style="font-size:.72rem;">চলমান</span>
+                    <span class="label-en" style="font-size:.58rem;">IN PROGRESS</span>
+                </div>
             </div>
         </div>
     </div>
@@ -79,7 +99,10 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
                 <div class="stat-value">{{ ticket_stats.resolved_today }}</div>
-                <div class="stat-label">Resolved Today</div>
+                <div class="stat-label">
+                    <span class="label-bn" style="font-size:.72rem;">সমাধান</span>
+                    <span class="label-en" style="font-size:.58rem;">RESOLVED TODAY</span>
+                </div>
             </div>
         </div>
     </div>
@@ -88,7 +111,10 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-plus-circle-fill"></i></div>
                 <div class="stat-value">{{ ticket_stats.new_today }}</div>
-                <div class="stat-label">New Today</div>
+                <div class="stat-label">
+                    <span class="label-bn" style="font-size:.72rem;">নতুন</span>
+                    <span class="label-en" style="font-size:.58rem;">NEW TODAY</span>
+                </div>
             </div>
         </div>
     </div>
@@ -97,35 +123,38 @@
             <div class="card-body">
                 <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
                 <div class="stat-value">{{ ticket_stats.total_open }}</div>
-                <div class="stat-label">Total Pending</div>
+                <div class="stat-label">
+                    <span class="label-bn" style="font-size:.72rem;">বাকিতে</span>
+                    <span class="label-en" style="font-size:.58rem;">TOTAL PENDING</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-
 
 <div class="row g-4">
     <!-- Recent Tickets -->
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6><i class="bi bi-ticket-detailed me-2 text-primary"></i>Recent Tickets</h6>
+                <h6><i class="bi bi-ticket-detailed me-2 text-primary"></i>সাম্প্রতিক টিকিটসমূহ / Recent Tickets</h6>
                 <a href="{% url 'ticket_list' %}" class="btn btn-sm btn-outline-primary">
-                    View All <i class="bi bi-arrow-right ms-1"></i>
+                    সব দেখুন / View All <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
-            <div class="card-body p-0">
+
+            <!-- Desktop Table -->
+            <div class="card-body p-0 desktop-table">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Ticket</th>
-                                <th>Type</th>
-                                <th>Customer</th>
-                                <th>Status</th>
-                                <th>Priority</th>
-                                <th>Created</th>
+                                <th>টিকিট আইডি /<br>TICKET ID</th>
+                                <th>ধরন /<br>TYPE</th>
+                                <th>গ্রাহক /<br>CUSTOMER</th>
+                                <th>অবস্থা /<br>STATUS</th>
+                                <th>অগ্রাধি /<br>PRIORITY</th>
+                                <th>সময় /<br>CREATED</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,7 +172,8 @@
                                 </td>
                                 <td>
                                     {% if ticket.customer %}
-                                        {{ ticket.customer.name }}
+                                        <div class="fw-semibold">{{ ticket.customer.name }}</div>
+                                        <small class="text-muted">CID: {{ ticket.customer.customer_id }}</small>
                                     {% elif ticket.contact_name %}
                                         {{ ticket.contact_name }}
                                     {% else %}
@@ -167,10 +197,10 @@
                                 <td colspan="6">
                                     <div class="empty-state">
                                         <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
-                                        <h5>No tickets yet</h5>
-                                        <p>Create your first ticket to get started</p>
+                                        <h5>কোন টিকিট নেই / No tickets yet</h5>
+                                        <p>প্রথম টিকিট তৈরি করুন / Create your first ticket to get started</p>
                                         <a href="{% url 'ticket_create' %}" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-plus-lg me-1"></i>Create Ticket
+                                            <i class="bi bi-plus-lg me-1"></i>নতুন টিকিট তৈরি করুন
                                         </a>
                                     </div>
                                 </td>
@@ -180,25 +210,61 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Mobile Cards -->
+            <div class="card-body mobile-cards" style="display:none;">
+                {% for ticket in recent_tickets %}
+                <div class="mobile-ticket-card priority-{{ ticket.priority }}">
+                    <div class="mtc-header">
+                        <span class="mtc-ticket-num">{{ ticket.ticket_number }}</span>
+                        <span class="badge badge-priority-{{ ticket.priority }}">
+                            {{ ticket.get_priority_display }}
+                        </span>
+                    </div>
+                    <div class="mtc-customer">
+                        {% if ticket.customer %}{{ ticket.customer.name }}{% elif ticket.contact_name %}{{ ticket.contact_name }}{% else %}—{% endif %}
+                    </div>
+                    <div class="mtc-meta">
+                        {% if ticket.customer %}CID: {{ ticket.customer.customer_id }} • {% endif %}
+                        {{ ticket.created_at|timesince }} আগে
+                    </div>
+                    <div class="mtc-tags">
+                        <span class="badge badge-type-{{ ticket.ticket_type }}">{{ ticket.get_ticket_type_display }}</span>
+                        <span class="badge badge-status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    </div>
+                    <div class="mtc-actions">
+                        <a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-rocket-takeoff me-1"></i>শুরু করুন (Start)
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
+                    <h5>কোন টিকিট নেই</h5>
+                    <p>No tickets yet</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
-        <!-- My Tickets -->
+        <!-- My Active Tickets -->
         {% if my_tickets %}
         <div class="card mt-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6><i class="bi bi-person-lines-fill me-2 text-success"></i>My Active Tickets</h6>
-                <a href="{% url 'my_tickets' %}" class="btn btn-sm btn-outline-success">View All</a>
+                <h6><i class="bi bi-person-lines-fill me-2 text-success"></i>আমার সক্রিয় টিকিট / My Active Tickets</h6>
+                <a href="{% url 'my_tickets' %}" class="btn btn-sm btn-outline-success">সব দেখুন</a>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0 desktop-table">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Ticket</th>
-                                <th>Type</th>
-                                <th>Customer</th>
-                                <th>Priority</th>
-                                <th>Scheduled</th>
+                                <th>টিকিট</th>
+                                <th>ধরন / Type</th>
+                                <th>গ্রাহক / Customer</th>
+                                <th>অগ্রাধিকার</th>
+                                <th>তারিখ / Scheduled</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -239,6 +305,26 @@
                     </table>
                 </div>
             </div>
+            <!-- Mobile version of My Tickets -->
+            <div class="card-body mobile-cards" style="display:none;">
+                {% for ticket in my_tickets %}
+                <div class="mobile-ticket-card priority-{{ ticket.priority }}">
+                    <div class="mtc-header">
+                        <span class="mtc-ticket-num">{{ ticket.ticket_number }}</span>
+                        <span class="badge badge-priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
+                    </div>
+                    <div class="mtc-customer">{{ ticket.customer.name|default:ticket.contact_name|default:"—" }}</div>
+                    <div class="mtc-tags">
+                        <span class="badge badge-type-{{ ticket.ticket_type }}">{{ ticket.get_ticket_type_display }}</span>
+                    </div>
+                    <div class="mtc-actions">
+                        <a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-rocket-takeoff me-1"></i>শুরু করুন (Start)
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
     </div>
@@ -248,29 +334,34 @@
         <!-- Low Stock -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Low Stock</h6>
-                <a href="{% url 'stock_list' %}?low_stock=1" class="btn btn-xs btn-outline-warning">View All</a>
+                <h6><i class="bi bi-exclamation-triangle me-2 text-warning"></i>স্টক এলার্ট / Stock Alerts</h6>
+                <a href="{% url 'stock_list' %}?low_stock=1" class="btn btn-xs btn-outline-warning">
+                    <span class="badge bg-warning text-dark">LOW STOCK</span>
+                </a>
             </div>
             <div class="card-body">
                 {% for item in low_stock_items %}
                 <div class="d-flex justify-content-between align-items-center
                     {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
-                    <div>
-                        <div class="fw-semibold" style="font-size:0.835rem;">{{ item.name }}</div>
-                        <small class="text-muted">{{ item.category.name }}</small>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon" style="width:36px;height:36px;font-size:.85rem;margin-bottom:0;background:var(--red-light);color:var(--red);">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold" style="font-size:0.835rem;">{{ item.name }}</div>
+                            <small class="text-muted">
+                                শুধু {{ item.quantity_in_stock }}টি বাকি / Only {{ item.quantity_in_stock }} left
+                            </small>
+                        </div>
                     </div>
-                    <div class="text-end">
-                        {% if item.quantity_in_stock == 0 %}
-                            <span class="badge bg-danger">Out</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark">{{ item.quantity_in_stock }}</span>
-                        {% endif %}
-                    </div>
+                    <a href="{% url 'stock_item_detail' item.pk %}" class="btn btn-action btn-outline-secondary">
+                        <i class="bi bi-cart-plus"></i>
+                    </a>
                 </div>
                 {% empty %}
                 <div class="text-center py-2">
                     <i class="bi bi-check-circle text-success d-block mb-2" style="font-size:1.4rem;"></i>
-                    <small class="text-muted">Stock levels healthy</small>
+                    <small class="text-muted">স্টক ঠিক আছে / Stock levels healthy</small>
                 </div>
                 {% endfor %}
             </div>
@@ -279,8 +370,8 @@
         <!-- Unassigned -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6><i class="bi bi-person-x me-2 text-danger"></i>Unassigned</h6>
-                <a href="{% url 'ticket_list' %}?status=open" class="btn btn-xs btn-outline-danger">View All</a>
+                <h6><i class="bi bi-person-x me-2 text-danger"></i>অনির্ধারিত টিকিট / Unassigned</h6>
+                <span class="badge bg-danger">PENDING</span>
             </div>
             <div class="card-body">
                 {% for ticket in unassigned_tickets %}
@@ -296,14 +387,17 @@
                             </span>
                         </div>
                     </div>
-                    <span class="badge badge-priority-{{ ticket.priority }}">
-                        {{ ticket.get_priority_display }}
-                    </span>
+                    <div class="text-end">
+                        <span class="badge badge-priority-{{ ticket.priority }}">
+                            {{ ticket.get_priority_display }}
+                        </span>
+                        <div><small class="text-muted">{{ ticket.created_at|timesince }} আগে</small></div>
+                    </div>
                 </div>
                 {% empty %}
                 <div class="text-center py-2">
                     <i class="bi bi-check-circle text-success d-block mb-2" style="font-size:1.4rem;"></i>
-                    <small class="text-muted">All tickets assigned!</small>
+                    <small class="text-muted">সব টিকিট বরাদ্দ হয়েছে! / All tickets assigned!</small>
                 </div>
                 {% endfor %}
             </div>

@@ -4,19 +4,19 @@
 {% block content %}
 <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
-        <h4>Customers</h4>
-        <div class="subtitle">{{ customers.count }} total customers</div>
+        <h4>গ্রাহক / Customers</h4>
+        <div class="subtitle">সর্বমোট {{ customers.count }} জন গ্রাহক / total customers</div>
     </div>
     <div class="header-actions">
         <a href="{% url 'area_list' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-geo-alt"></i> <span class="d-none d-md-inline">Areas</span>
+            <i class="bi bi-geo-alt"></i> <span class="d-none d-md-inline">এলাকা / Areas</span>
         </a>
         <a href="{% url 'package_list' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-box"></i> <span class="d-none d-md-inline">Packages</span>
+            <i class="bi bi-box"></i> <span class="d-none d-md-inline">প্যাকেজ / Packages</span>
         </a>
         {% if user_access.customers in 'edit,full' or has_admin_privileges %}
         <a href="{% url 'customer_create' %}" class="btn btn-primary">
-            <i class="bi bi-person-plus"></i> Add Customer
+            <i class="bi bi-person-plus"></i> গ্রাহক যোগ করুন / Add Customer
         </a>
         {% endif %}
     </div>
@@ -27,12 +27,12 @@
     <form method="get">
         <div class="row g-2 align-items-end">
             <div class="col-md-3 col-6">
-                <label class="form-label">Search</label>
+                <label class="form-label">খুঁজুন / Search</label>
                 <input type="text" name="search" class="form-control form-control-sm"
-                       placeholder="Name, ID, Phone..." value="{{ filters.search }}">
+                       placeholder="নাম, আইডি, ফোন... / Name, ID, Phone..." value="{{ filters.search }}">
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label">Area</label>
+                <label class="form-label">এলাকা / Area</label>
                 <select name="area" class="form-select form-select-sm">
                     <option value="">All</option>
                     {% for a in areas %}
@@ -41,7 +41,7 @@
                 </select>
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label">Status</label>
+                <label class="form-label">অবস্থা / Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All</option>
                     {% for val, label in status_choices %}
@@ -50,7 +50,7 @@
                 </select>
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label">Package</label>
+                <label class="form-label">প্যাকেজ / Package</label>
                 <select name="package" class="form-select form-select-sm">
                     <option value="">All</option>
                     {% for p in packages %}
@@ -60,8 +60,8 @@
             </div>
             <div class="col-md-3 col-12">
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
-                    <a href="{% url 'customer_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>ফিল্টার / Filter</button>
+                    <a href="{% url 'customer_list' %}" class="btn btn-sm btn-outline-secondary">মুছুন / Clear</a>
                 </div>
             </div>
         </div>
@@ -75,11 +75,11 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Customer</th>
-                        <th>Area</th>
-                        <th>Package</th>
-                        <th>Status</th>
-                        <th>Due</th>
+                        <th>গ্রাহক / Customer</th>
+                        <th>এলাকা / Area</th>
+                        <th>প্যাকেজ / Package</th>
+                        <th>অবস্থা / Status</th>
+                        <th>বকেয়া / Due</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -99,11 +99,11 @@
                         </td>
                         <td>
                             {% if customer.status == 'active' %}
-                                <span class="badge" style="background:var(--green-light); color:var(--green);">Active</span>
+                                <span class="badge" style="background:var(--green-light); color:var(--green);">সক্রিয় / Active</span>
                             {% elif customer.status == 'suspended' %}
-                                <span class="badge" style="background:var(--red-light); color:var(--red);">Suspended</span>
+                                <span class="badge" style="background:var(--red-light); color:var(--red);">স্থগিত / Suspended</span>
                             {% elif customer.status == 'pending' %}
-                                <span class="badge" style="background:var(--yellow-light); color:var(--yellow-dark);">Pending</span>
+                                <span class="badge" style="background:var(--yellow-light); color:var(--yellow-dark);">অপেক্ষমান / Pending</span>
                             {% else %}
                                 <span class="badge" style="background:#f3f4f6; color:#6b7280;">{{ customer.get_status_display }}</span>
                             {% endif %}
@@ -135,11 +135,11 @@
                         <td colspan="6">
                             <div class="empty-state">
                                 <div class="empty-icon"><i class="bi bi-people"></i></div>
-                                <h5>No customers found</h5>
-                                <p>Add your first customer to get started</p>
+                                <h5>কোনো গ্রাহক পাওয়া যায়নি / No customers found</h5>
+                                <p>প্রথম গ্রাহক যোগ করুন / Add your first customer</p>
                                 {% if user_access.customers in 'edit,full' or has_admin_privileges %}
                                 <a href="{% url 'customer_create' %}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-person-plus me-1"></i>Add Customer
+                                    <i class="bi bi-person-plus me-1"></i>গ্রাহক যোগ করুন / Add Customer
                                 </a>
                                 {% endif %}
                             </div>

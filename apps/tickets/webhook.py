@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from .models import Ticket, TicketComment
+from .models import Ticket, TicketComment, TicketStatusLog
 from apps.accounts.models import Employee
 from apps.schedule.models import Schedule
 
@@ -123,6 +123,9 @@ def send_ticket_detail(chat_id, employee, ticket_ref):
         [
             {"text": "🚀 Accept (In Progress)", "callback_data": f"accept_{ticket.id}"},
             {"text": "✅ Mark Resolved", "callback_data": f"resolve_{ticket.id}"}
+        ],
+        [
+            {"text": "❌ Reject Task", "callback_data": f"reject_{ticket.id}"}
         ]
     ]
     send_telegram_message(chat_id, msg, inline_keyboard=buttons)
@@ -210,7 +213,7 @@ def handle_callback(chat_id, data, callback_id):
         answer_callback_query(callback_id, "Unauthorized User!")
         return
 
-    if data.startswith('accept_') or data.startswith('resolve_'):
+    if data.startswith('accept_') or data.startswith('resolve_') or data.startswith('reject_'):
         action, ticket_id = data.split('_', 1)
         try:
             ticket = Ticket.objects.get(id=ticket_id, assigned_to=employee)
@@ -231,6 +234,23 @@ def handle_callback(chat_id, data, callback_id):
                     ticket.save(update_fields=['status', 'resolved_at', 'resolved_by'])
                     answer_callback_query(callback_id, "✅ Ticket Resolved!")
                     send_telegram_message(chat_id, f"🎉 Great job! Ticket <b>{ticket.ticket_number}</b> resolved.")
+                elif action == 'reject':
+                    old_status = ticket.status
+                    ticket.status = 'open'
+                    ticket.assigned_to = None
+                    ticket._skip_telegram = True
+                    ticket.save(update_fields=['status', 'assigned_to'])
+                    
+                    TicketStatusLog.objects.create(
+                        ticket=ticket,
+                        old_status=old_status,
+                        new_status='open',
+                        changed_by=employee,
+                        notes="Task rejected via Telegram."
+                    )
+                    
+                    answer_callback_query(callback_id, "🚫 Task Rejected!")
+                    send_telegram_message(chat_id, f"The ticket <b>{ticket.ticket_number}</b> was rejected and removed from your tasks.")
         except Ticket.DoesNotExist:
             answer_callback_query(callback_id, "Ticket Not Found!")
 

@@ -1,38 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Tickets - TaskFiber{% endblock %}
+{% block title %}টিকিট তালিকা / Tickets - TaskFiber{% endblock %}
 
 {% block content %}
 <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
-        <h4>Tickets</h4>
-        <div class="subtitle">{{ tickets.paginator.count }} tickets found</div>
+        <h4>টিকিট তালিকা (Ticket List)</h4>
+        <div class="subtitle">Manage and track all ISP field operations and support tickets.</div>
     </div>
     <div class="header-actions">
         {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
         <a href="{% url 'ticket_create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> New Ticket
+            <i class="bi bi-plus-lg"></i> নতুন টিকিট / New Ticket
         </a>
-        <a href="{% url 'ticket_import_csv' %}" class="btn btn-outline-success btn-sm">
+        <a href="{% url 'ticket_import_csv' %}" class="btn btn-outline-success btn-sm d-none d-md-inline-flex">
             <i class="bi bi-upload me-1"></i>Import CSV
         </a>
         {% endif %}
-        <a href="{% url 'ticket_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm" title="Export CSV">
+        <a href="{% url 'ticket_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm d-none d-md-inline-flex" title="Export CSV">
             <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
         </a>
-        <a href="{% url 'ticket_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm" title="Export PDF">
+        <a href="{% url 'ticket_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm d-none d-md-inline-flex" title="Export PDF">
             <i class="bi bi-file-earmark-pdf me-1"></i>PDF
         </a>
     </div>
 </div>
 
-{% if filters.team_group %}
+{% if filters.team_group or filters.ticket_type == 'line_release' %}
 <div class="alert alert-primary py-2 px-3 mb-3 d-flex justify-content-between align-items-center" style="border-left: 4px solid var(--bs-primary);">
     <div>
-        <strong><i class="bi bi-funnel-fill me-1"></i> Active Team Filter:</strong> 
+        <strong><i class="bi bi-funnel-fill me-1"></i> সক্রিয় ফিল্টার / Active Filter:</strong> 
         {% if filters.team_group == 'cable' %}
-            Cable / Field Team Tasks
+            🔧 ক্যাবল / ফিল্ড টিম / Cable / Field Team Tasks
         {% elif filters.team_group == 'support' %}
-            Remote Support Tasks
+            💻 রিমোট সাপোর্ট / Remote Support Tasks
+        {% elif filters.ticket_type == 'line_release' %}
+            🚪 লাইন বাতিল / Connection Release Tasks
         {% endif %}
     </div>
     <a href="{% url 'ticket_list' %}?status={{ filters.status|default_if_none:'' }}" class="btn btn-sm btn-close" aria-label="Close"></a>
@@ -46,14 +48,14 @@
         <input type="hidden" name="team_group" value="{{ filters.team_group }}">
         <div class="row g-2 align-items-end">
             <div class="col-md-2 col-6">
-                <label class="form-label">Search</label>
+                <label class="form-label">SEARCH TICKETS</label>
                 <input type="text" name="search" class="form-control form-control-sm"
-                       placeholder="Ticket#, Name..." value="{{ filters.search }}">
+                       placeholder="🔍 ID, Name or Phone..." value="{{ filters.search }}">
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label">Status</label>
+                <label class="form-label">অবস্থা / STATUS</label>
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">All</option>
+                    <option value="">All Statuses</option>
                     <option value="unresolved" {% if filters.status == 'unresolved' %}selected{% endif %}>Pending (Unresolved)</option>
                     {% for val, label in status_choices %}
                     <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
@@ -61,9 +63,9 @@
                 </select>
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label">Type</label>
+                <label class="form-label">ধরন / TYPE</label>
                 <select name="ticket_type" class="form-select form-select-sm">
-                    <option value="">All</option>
+                    <option value="">All Types</option>
                     {% for group_name, group_choices in type_choices %}
                         <optgroup label="{{ group_name }}">
                         {% for val, label in group_choices %}
@@ -74,16 +76,16 @@
                 </select>
             </div>
             <div class="col-md-1 col-6">
-                <label class="form-label">Priority</label>
+                <label class="form-label">অগ্রাধিকার / PRIORITY</label>
                 <select name="priority" class="form-select form-select-sm">
-                    <option value="">All</option>
+                    <option value="">All Priority</option>
                     {% for val, label in priority_choices %}
                     <option value="{{ val }}" {% if filters.priority == val %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2 col-6">
-                <label class="form-label">Assigned To</label>
+            <div class="col-md-2 col-6 d-none d-md-block">
+                <label class="form-label">এসাইনড / ASSIGNED TO</label>
                 <select name="assigned_to" class="form-select form-select-sm">
                     <option value="">All</option>
                     {% for emp in employees %}
@@ -94,7 +96,7 @@
                 </select>
             </div>
             <div class="col-md-3 col-12">
-                <label class="form-label">Period</label>
+                <label class="form-label">সময়কাল / PERIOD</label>
                 <div class="d-flex gap-2 align-items-center">
                     <div class="btn-group btn-group-sm flex-grow-1">
                         <button type="button" data-range="" class="btn {% if not filters.date_range %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</button>
@@ -136,21 +138,21 @@
 })();
 </script>
 
-<!-- Table -->
-<div class="card">
+<!-- Desktop Table View -->
+<div class="card desktop-table">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Ticket</th>
-                        <th>Type</th>
-                        <th>Customer</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Assigned To</th>
-                        <th>Created</th>
-                        <th></th>
+                        <th>TICKET #</th>
+                        <th>ধরন / TYPE</th>
+                        <th>গ্রাহক / CUSTOMER</th>
+                        <th>অগ্রাধিকার / PRIORITY</th>
+                        <th>অবস্থা / STATUS</th>
+                        <th>এসাইনড / ASSIGNED TO</th>
+                        <th>তারিখ / CREATED</th>
+                        <th>অ্যাকশন / ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -170,7 +172,7 @@
                         <td>
                             {% if ticket.customer %}
                                 <div class="fw-medium">{{ ticket.customer.name }}</div>
-                                <small class="text-muted">{{ ticket.customer.customer_id }}</small>
+                                <small class="text-muted">ID: {{ ticket.customer.customer_id }}{% if ticket.customer.area %} • {{ ticket.customer.area.name }}{% endif %}</small>
                             {% elif ticket.contact_name %}
                                 <div>{{ ticket.contact_name }}</div>
                                 <small class="text-muted">{{ ticket.contact_phone }}</small>
@@ -190,7 +192,10 @@
                         </td>
                         <td>
                             {% if ticket.assigned_to %}
-                                <span style="font-size:0.835rem;">{{ ticket.assigned_to.full_name }}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-gradient avatar-xs">{{ ticket.assigned_to.full_name|truncatechars:2 }}</div>
+                                    <span style="font-size:0.835rem;">{{ ticket.assigned_to.full_name }}</span>
+                                </div>
                             {% else %}
                                 <span class="badge" style="background:var(--red-light); color:var(--red);">Unassigned</span>
                             {% endif %}
@@ -202,17 +207,16 @@
                             </small>
                         </td>
                         <td>
-                            <div class="d-flex gap-1">
-                                <a href="{% url 'ticket_detail' ticket.pk %}"
-                                   class="btn btn-action btn-outline-primary" data-bs-toggle="tooltip" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
-                                <a href="{% url 'ticket_edit' ticket.pk %}"
-                                   class="btn btn-action btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                {% endif %}
+                            <div class="dropdown">
+                                <button class="btn btn-action btn-ghost" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'ticket_detail' ticket.pk %}"><i class="bi bi-eye me-2"></i>দেখুন / View</a></li>
+                                    {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
+                                    <li><a class="dropdown-item" href="{% url 'ticket_edit' ticket.pk %}"><i class="bi bi-pencil me-2"></i>এডিট / Edit</a></li>
+                                    {% endif %}
+                                </ul>
                             </div>
                         </td>
                     </tr>
@@ -221,11 +225,11 @@
                         <td colspan="8">
                             <div class="empty-state">
                                 <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
-                                <h5>No tickets found</h5>
-                                <p>Try adjusting your filters or create a new ticket</p>
+                                <h5>কোন টিকিট পাওয়া যায়নি / No tickets found</h5>
+                                <p>ফিল্টার পরিবর্তন করুন অথবা নতুন টিকিট তৈরি করুন</p>
                                 {% if user_access.tickets in 'edit,full' or has_admin_privileges %}
                                 <a href="{% url 'ticket_create' %}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-plus-lg me-1"></i>Create Ticket
+                                    <i class="bi bi-plus-lg me-1"></i>নতুন টিকিট তৈরি করুন
                                 </a>
                                 {% endif %}
                             </div>
@@ -236,6 +240,48 @@
             </table>
         </div>
     </div>
+</div>
+
+<!-- Mobile Card View -->
+<div class="mobile-cards" style="display:none;">
+    {% for ticket in tickets %}
+    <div class="mobile-ticket-card priority-{{ ticket.priority }}">
+        <div class="mtc-header">
+            <span class="mtc-ticket-num">{{ ticket.ticket_number }}</span>
+            <span class="badge badge-priority-{{ ticket.priority }}">
+                {% if ticket.priority == 'urgent' %}🔴 জরুরি{% elif ticket.priority == 'high' %}🟠 গুরুত্বপূর্ণ{% elif ticket.priority == 'medium' %}🟡 সাধারণ{% else %}🟢 নিচু{% endif %}
+            </span>
+        </div>
+        <div class="mtc-customer">
+            {% if ticket.customer %}{{ ticket.customer.name }}{% elif ticket.contact_name %}{{ ticket.contact_name }}{% else %}—{% endif %}
+        </div>
+        <div class="mtc-meta">
+            {% if ticket.customer %}CUS-{{ ticket.customer.customer_id }} • {% endif %}
+            {% if ticket.customer and ticket.customer.area %}{{ ticket.customer.area.name }} • {% endif %}
+            {{ ticket.created_at|timesince }} আগে
+        </div>
+        <div class="mtc-tags">
+            <span class="badge badge-type-{{ ticket.ticket_type }}">{{ ticket.get_ticket_type_display }}</span>
+            <span class="badge badge-status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+        </div>
+        <div class="mtc-actions">
+            {% if ticket.customer and ticket.customer.phone %}
+            <a href="tel:{{ ticket.customer.phone }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-telephone me-1"></i>ফোন করুন
+            </a>
+            {% endif %}
+            <a href="{% url 'ticket_detail' ticket.pk %}" class="btn btn-sm btn-primary">
+                <i class="bi bi-rocket-takeoff me-1"></i>শুরু করুন (Start)
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="bi bi-ticket-detailed"></i></div>
+        <h5>কোন টিকিট পাওয়া যায়নি</h5>
+        <p>No tickets found</p>
+    </div>
+    {% endfor %}
 </div>
 
 {% if tickets.has_other_pages %}
@@ -268,5 +314,25 @@
     </ul>
 </nav>
 {% endif %}
+
+<!-- Bottom Stats Bar -->
+<div class="bottom-stats-bar d-none d-md-flex">
+    <div class="stat-item">
+        <div class="stat-item-label">ACTIVE TICKETS</div>
+        <div class="stat-item-value text-primary">{{ tickets.paginator.count }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-item-label">CRITICAL ISSUES</div>
+        <div class="stat-item-value text-danger">{{ critical_count|default:"—" }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-item-label">PENDING ASSIGN</div>
+        <div class="stat-item-value text-warning">{{ unassigned_count|default:"—" }}</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-item-label">RESOLVED TODAY</div>
+        <div class="stat-item-value text-info">{{ resolved_today_count|default:"—" }}</div>
+    </div>
+</div>
 
 {% endblock %}

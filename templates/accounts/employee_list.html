@@ -4,23 +4,23 @@
 {% block content %}
 <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
-        <h4>Employees</h4>
-        <div class="subtitle">{{ employees.count }} team members</div>
+        <h4>সহকর্মী / Employees</h4>
+        <div class="subtitle">{{ employees.count }} জন সদস্য / team members</div>
     </div>
     <div class="header-actions">
         {% if user_access.employees in 'edit,full' or has_admin_privileges %}
         <a href="{% url 'employee_create' %}" class="btn btn-primary">
-            <i class="bi bi-person-plus"></i> Add Employee
+            <i class="bi bi-person-plus"></i> কর্মী যোগ করুন / Add Employee
         </a>
         <a href="{% url 'employee_import_csv' %}" class="btn btn-outline-success btn-sm">
-            <i class="bi bi-upload me-1"></i>Import CSV
+            <i class="bi bi-upload me-1"></i>ইমপোর্ট সিএসভি / Import CSV
         </a>
         {% endif %}
         <a href="{% url 'employee_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm" title="Export CSV">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>এক্সপোর্ট সিএসভি / Export CSV
         </a>
         <a href="{% url 'employee_export_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm" title="Export PDF">
-            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            <i class="bi bi-file-earmark-pdf me-1"></i>এক্সপোর্ট পিডিএফ / Export PDF
         </a>
     </div>
 </div>
@@ -29,12 +29,12 @@
 <div class="filter-bar">
     <form method="get" class="row g-2 align-items-end">
         <div class="col-md-3 col-6">
-            <label class="form-label">Search</label>
+            <label class="form-label">খুঁজুন / Search</label>
             <input type="text" name="search" class="form-control form-control-sm"
-                   placeholder="Name, ID, Phone..." value="{{ filters.search|default:'' }}">
+                   placeholder="নাম, আইডি, ফোন... / Name, ID, Phone..." value="{{ filters.search|default:'' }}">
         </div>
         <div class="col-md-2 col-6">
-            <label class="form-label">Department</label>
+            <label class="form-label">বিভাগ / Department</label>
             <select name="department" class="form-select form-select-sm">
                 <option value="">All</option>
                 <option value="management" {% if filters.department == 'management' %}selected{% endif %}>Management</option>
@@ -45,7 +45,7 @@
             </select>
         </div>
         <div class="col-md-2 col-6">
-            <label class="form-label">Role</label>
+            <label class="form-label">পদবি / Role</label>
             <select name="role" class="form-select form-select-sm">
                 <option value="">All</option>
                 {% for r in roles %}
@@ -54,7 +54,7 @@
             </select>
         </div>
         <div class="col-md-2 col-6">
-            <label class="form-label">Status</label>
+            <label class="form-label">অবস্থা / Status</label>
             <select name="status" class="form-select form-select-sm">
                 <option value="">All</option>
                 <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active</option>
@@ -64,9 +64,9 @@
         <div class="col-md-3 col-12">
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary">
-                    <i class="bi bi-search me-1"></i>Filter
+                    <i class="bi bi-search me-1"></i>ফিল্টার / Filter
                 </button>
-                <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+                <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-secondary">মুছুন / Clear</a>
             </div>
         </div>
     </form>
@@ -79,11 +79,11 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Employee</th>
-                        <th>Role</th>
-                        <th>Department</th>
-                        <th>Phone</th>
-                        <th>Status</th>
+                        <th>কর্মী / Employee</th>
+                        <th>পদবি / Role</th>
+                        <th>বিভাগ / Department</th>
+                        <th>ফোন / Phone</th>
+                        <th>অবস্থা / Status</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -140,11 +140,11 @@
                         <td colspan="6">
                             <div class="empty-state">
                                 <div class="empty-icon"><i class="bi bi-person-badge"></i></div>
-                                <h5>No employees found</h5>
-                                <p>Add your first team member</p>
+                                <h5>কোনো কর্মী পাওয়া যায়নি / No employees found</h5>
+                                <p>আপনার প্রথম কর্মী যোগ করুন / Add your first team member</p>
                                 {% if user_access.employees in 'edit,full' or has_admin_privileges %}
                                 <a href="{% url 'employee_create' %}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-person-plus me-1"></i>Add Employee
+                                    <i class="bi bi-person-plus me-1"></i>কর্মী যোগ করুন / Add Employee
                                 </a>
                                 {% endif %}
                             </div>

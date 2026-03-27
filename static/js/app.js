@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TaskFiber ISP Manager — Modern App Controller
  */
 (function () {
@@ -232,6 +232,23 @@
         }
     };
 
+    /* ── Bottom Nav (Mobile) ── */
+    const BottomNav = {
+        init() {
+            const nav = document.getElementById('bottomNav');
+            if (!nav) return;
+            const path = window.location.pathname;
+            nav.querySelectorAll('.bottom-nav-item').forEach(item => {
+                const href = item.getAttribute('href');
+                if (href && path.startsWith(href) && !item.classList.contains('nav-create')) {
+                    // Clear existing active states first
+                    nav.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                }
+            });
+        }
+    };
+
     /* ── Init ── */
     document.addEventListener('DOMContentLoaded', () => {
         Sidebar.init();
@@ -244,6 +261,7 @@
         ConfirmActions.init();
         Tooltips.init();
         CountUp.init();
+        BottomNav.init();
     });
 })();
 

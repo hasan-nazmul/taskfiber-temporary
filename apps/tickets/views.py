@@ -155,6 +155,18 @@ def ticket_list(request):
         team_choices = list(Team.objects.all())
         cache.set('ticket_filter_teams', team_choices, 300)
 
+    # Bottom stats bar counts
+    today_stats = timezone.localdate()
+    critical_count = Ticket.objects.filter(priority='urgent').exclude(
+        status__in=['resolved', 'closed', 'cancelled']
+    ).count()
+    unassigned_count = Ticket.objects.filter(assigned_to__isnull=True).exclude(
+        status__in=['resolved', 'closed', 'cancelled']
+    ).count()
+    resolved_today_count = Ticket.objects.filter(
+        status='resolved', resolved_at__date=today_stats
+    ).count()
+
     context = {
         'tickets': tickets_page,
         'employees': employees,
@@ -172,6 +184,9 @@ def ticket_list(request):
         'type_choices': Ticket.TICKET_TYPE_CHOICES,
         'priority_choices': Ticket.PRIORITY_CHOICES,
         'team_choices': team_choices,
+        'critical_count': critical_count,
+        'unassigned_count': unassigned_count,
+        'resolved_today_count': resolved_today_count,
     }
     return render(request, 'tickets/ticket_list.html', context)
 
@@ -399,37 +414,38 @@ def ticket_detail(request, pk):
                 ticket.assigned_team = assign_form.cleaned_data['assigned_team']
                 ticket.assigned_to = assign_form.cleaned_data['assigned_to']
 
-                if ticket.assigned_to:
-                    # Auto-set status to 'assigned' if currently open or re-assigning
-                    if ticket.status in ('open',):
-                        old_status = ticket.status
+                if old_assigned != ticket.assigned_to:
+                    log_notes = ''
+                    if ticket.assigned_to:
+                        if old_assigned:
+                            log_notes = f'Re-assigned: {old_assigned.full_name} → {ticket.assigned_to.full_name}'
+                        else:
+                            log_notes = f'Assigned to {ticket.assigned_to.full_name}'
+                    else:
+                        log_notes = f'Unassigned from {old_assigned.full_name}'
+
+                    old_status = ticket.status
+
+                    # Auto-set status to 'assigned' if currently open
+                    if ticket.assigned_to and ticket.status == 'open':
                         ticket.status = 'assigned'
                         ticket.assigned_at = timezone.now()
-
-                        TicketStatusLog.objects.create(
-                            ticket=ticket,
-                            old_status=old_status,
-                            new_status='assigned',
-                            changed_by=employee,
-                            notes=f'Assigned to {ticket.assigned_to.full_name}'
-                        )
-                    elif not old_assigned:
+                    elif not old_assigned and ticket.assigned_to:
                         # First time assigning but ticket already progressed
                         ticket.assigned_at = timezone.now()
-                else:
-                    # Un-assigning: revert to open if status was 'assigned'
-                    if ticket.status == 'assigned':
-                        old_status = ticket.status
+                    elif not ticket.assigned_to and ticket.status == 'assigned':
+                        # Un-assigning: revert to open if status was 'assigned'
                         ticket.status = 'open'
                         ticket.assigned_at = None
 
-                        TicketStatusLog.objects.create(
-                            ticket=ticket,
-                            old_status=old_status,
-                            new_status='open',
-                            changed_by=employee,
-                            notes='Unassigned — reverted to open'
-                        )
+                    # Create a definitive log unconditionally for an assignment change
+                    TicketStatusLog.objects.create(
+                        ticket=ticket,
+                        old_status=old_status,
+                        new_status=ticket.status,
+                        changed_by=employee,
+                        notes=log_notes
+                    )
 
                 ticket.save()
 
@@ -591,9 +607,10 @@ def ticket_edit(request, pk):
         return redirect('ticket_list')
 
     if request.method == 'POST':
+        old_assigned = ticket.assigned_to
+        old_status = ticket.status
         form = TicketEditForm(request.POST, instance=ticket)
         if form.is_valid():
-            old_status = ticket.status
             updated_ticket = form.save(commit=False)
 
             # Prevent manual "assigned" status without an assignee
@@ -605,7 +622,7 @@ def ticket_edit(request, pk):
                 updated_ticket.status = 'assigned'
 
             # Track assignment
-            if updated_ticket.assigned_to and not ticket.assigned_at:
+            if updated_ticket.assigned_to and not updated_ticket.assigned_at:
                 updated_ticket.assigned_at = timezone.now()
 
             # Track resolution
@@ -616,17 +633,41 @@ def ticket_edit(request, pk):
             if updated_ticket.status == 'closed' and old_status != 'closed':
                 updated_ticket.closed_at = timezone.now()
 
+            new_status = updated_ticket.status
             updated_ticket.save()
 
-            # Log status change if changed
-            new_status = updated_ticket.status
+            # Log status change or assignment change
             if old_status != new_status and employee:
+                notes = 'Updated via edit form'
+                if old_assigned != updated_ticket.assigned_to:
+                     if updated_ticket.assigned_to:
+                         notes = f'Assigned to {updated_ticket.assigned_to.full_name} via edit form'
+                     else:
+                         notes = f'Unassigned via edit form'
+                
                 TicketStatusLog.objects.create(
                     ticket=updated_ticket,
                     old_status=old_status,
                     new_status=new_status,
                     changed_by=employee,
-                    notes='Updated via edit form'
+                    notes=notes
+                )
+            elif old_assigned != updated_ticket.assigned_to and employee:
+                log_notes = ''
+                if updated_ticket.assigned_to:
+                    if old_assigned:
+                        log_notes = f'Re-assigned: {old_assigned.full_name} → {updated_ticket.assigned_to.full_name}'
+                    else:
+                        log_notes = f'Assigned to {updated_ticket.assigned_to.full_name}'
+                else:
+                    log_notes = f'Unassigned from {old_assigned.full_name}'
+                
+                TicketStatusLog.objects.create(
+                    ticket=updated_ticket,
+                    old_status=old_status,
+                    new_status=new_status,
+                    changed_by=employee,
+                    notes=log_notes
                 )
 
             messages.success(request, f'Ticket {ticket.ticket_number} updated.')

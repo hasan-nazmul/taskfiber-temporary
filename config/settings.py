@@ -24,13 +24,13 @@ SECRET_KEY = os.environ.get(
     'django-insecure-dev-only-key-change-in-production-!@#$%^&*()'
 )
 
-DEBUG = env_bool('DJANGO_DEBUG', False)
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com')
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com,*')
 if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
+    ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
+CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1,http://localhost')
 
 INSTALLED_APPS = [
     'django.contrib.admin',

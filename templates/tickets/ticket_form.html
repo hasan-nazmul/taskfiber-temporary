@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-{% block title %}{{ title }} - TaskFiber{% endblock %}
+{% block title %}{% if ticket %}টিকিট এডিট{% else %}নতুন টিকিট তৈরি{% endif %} — TaskFiber{% endblock %}
 
 {% block content %}
 <div class="page-header d-flex flex-wrap justify-content-between align-items-center">
     <div>
-        <h4>{{ title }}</h4>
+        <h4>{% if ticket %}✏️ টিকিট এডিট / Edit Ticket{% else %}🎫 নতুন টিকিট তৈরি করুন{% endif %}</h4>
         <div class="subtitle">
-            {% if ticket %}Edit ticket details{% else %}Fill in the details below{% endif %}
+            {% if ticket %}Edit ticket details{% else %}Create a new task / নতুন কাজ তৈরি করুন{% endif %}
         </div>
     </div>
     <div class="header-actions">
         <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Back
+            <i class="bi bi-arrow-left"></i> ফিরে যান / Back
         </a>
     </div>
 </div>
@@ -25,49 +25,53 @@
     <div class="row g-4">
         <!-- Left Column -->
         <div class="col-lg-8">
-            <!-- Type & Source -->
+            <!-- Ticket Type — Icon Grid (NEW) + Dropdown fallback -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h6><i class="bi bi-tag me-2 text-primary"></i>Ticket Type</h6>
+                    <h6><i class="bi bi-tag me-2 text-primary"></i>টিকিটের ধরন / Ticket Type</h6>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">{{ form.ticket_type|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.source|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.priority|as_crispy_field }}</div>
+                    <!-- Icon Grid for Quick Selection -->
+                    <div class="icon-grid mb-3" id="ticketTypeGrid">
+                        <div class="icon-grid-item" data-type="new_connection" data-team="cable_team" data-priority="medium">
+                            <div class="grid-icon"><i class="bi bi-plus-circle"></i></div>
+                            <span class="grid-label-bn">নতুন সংযোগ</span>
+                            <span class="grid-label-en">NEW CONNECTION</span>
+                        </div>
+                        <div class="icon-grid-item" data-type="speed_slow" data-team="support" data-priority="medium">
+                            <div class="grid-icon"><i class="bi bi-speedometer2"></i></div>
+                            <span class="grid-label-bn">গতি কম</span>
+                            <span class="grid-label-en">SLOW SPEED</span>
+                        </div>
+                        <div class="icon-grid-item" data-type="no_connection" data-team="support" data-priority="high">
+                            <div class="grid-icon"><i class="bi bi-wifi-off"></i></div>
+                            <span class="grid-label-bn">সংযোগ নেই</span>
+                            <span class="grid-label-en">NO CONNECTION</span>
+                        </div>
+                        <div class="icon-grid-item" data-type="line_cut" data-team="cable_team" data-priority="high">
+                            <div class="grid-icon"><i class="bi bi-scissors"></i></div>
+                            <span class="grid-label-bn">লাইন কাট</span>
+                            <span class="grid-label-en">LINE CUT</span>
+                        </div>
+                        <div class="icon-grid-item" data-type="line_shift" data-team="cable_team" data-priority="medium">
+                            <div class="grid-icon"><i class="bi bi-arrow-left-right"></i></div>
+                            <span class="grid-label-bn">লাইন শিফট</span>
+                            <span class="grid-label-en">LINE SHIFT</span>
+                        </div>
+                        <div class="icon-grid-item" data-type="line_release" data-team="support" data-priority="high">
+                            <div class="grid-icon"><i class="bi bi-box-arrow-right"></i></div>
+                            <span class="grid-label-bn">লাইন রিলিজ</span>
+                            <span class="grid-label-en">LINE RELEASE</span>
+                        </div>
                     </div>
 
-                    <!-- Quick Type Buttons -->
-                    <div class="mt-3 d-flex flex-wrap gap-2">
-                        <span class="text-muted me-1" style="font-size:0.78rem; line-height:2;">Quick:</span>
-                        <button type="button" class="btn btn-xs btn-outline-primary quick-type-btn"
-                                data-type="new_connection" data-team="cable_team" data-priority="medium">
-                            <i class="bi bi-plus-circle me-1"></i>New Connection
-                        </button>
-                        <button type="button" class="btn btn-xs btn-outline-danger quick-type-btn"
-                                data-type="line_cut" data-team="cable_team" data-priority="high">
-                            <i class="bi bi-x-circle me-1"></i>Line Cut
-                        </button>
-                        <button type="button" class="btn btn-xs btn-outline-warning quick-type-btn"
-                                data-type="speed_slow" data-team="support" data-priority="medium">
-                            <i class="bi bi-speedometer me-1"></i>Speed Slow
-                        </button>
-                        <button type="button" class="btn btn-xs btn-outline-info quick-type-btn"
-                                data-type="password_change" data-team="support" data-priority="low">
-                            <i class="bi bi-key me-1"></i>Password
-                        </button>
-                        <button type="button" class="btn btn-xs btn-outline-secondary quick-type-btn"
-                                data-type="line_shift" data-team="cable_team" data-priority="medium">
-                            <i class="bi bi-arrow-left-right me-1"></i>Line Shift
-                        </button>
-                        <button type="button" class="btn btn-xs btn-outline-secondary quick-type-btn"
-                                data-type="adapter_issue" data-team="support" data-priority="medium">
-                            <i class="bi bi-plug me-1"></i>Adapter
-                        </button>
-                        <button type="button" class="btn btn-xs btn-outline-secondary quick-type-btn"
-                                data-type="tv_connect" data-team="cable_team" data-priority="low">
-                            <i class="bi bi-tv me-1"></i>TV Connect
-                        </button>
+                    <div class="row g-3">
+                        <div class="col-md-4">{{ form.ticket_type|as_crispy_field }}</div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">উৎস (Source) <small class="text-muted">ORIGIN</small></label>
+                            {{ form.source }}
+                        </div>
+                        <div class="col-md-4">{{ form.priority|as_crispy_field }}</div>
                     </div>
                 </div>
             </div>
@@ -75,15 +79,16 @@
             <!-- Customer -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h6><i class="bi bi-person me-2 text-success"></i>Customer</h6>
+                    <h6><i class="bi bi-person me-2 text-success"></i>গ্রাহকের তথ্য / Customer Details</h6>
                 </div>
                 <div class="card-body">
+                    <label class="form-label fw-bold mb-2">গ্রাহক খুঁজুন / Search Customer</label>
                     {{ form.customer|as_crispy_field }}
 
                     <div id="new-contact-fields" class="border-top pt-3 mt-3">
                         <div class="d-flex align-items-center gap-2 mb-3">
                             <i class="bi bi-info-circle text-muted"></i>
-                            <small class="text-muted">If customer is not in the system, fill contact details:</small>
+                            <small class="text-muted">গ্রাহক নেই? নিচে তথ্য দিন / If customer is not in the system, fill contact details:</small>
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">{{ form.contact_name|as_crispy_field }}</div>
@@ -98,21 +103,25 @@
             <!-- Details -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h6><i class="bi bi-card-text me-2 text-info"></i>Details</h6>
+                    <h6><i class="bi bi-card-text me-2 text-info"></i>টিকিটের বিবরণ / Ticket Details</h6>
                 </div>
                 <div class="card-body">
+                    <label class="form-label fw-bold">শিরোনাম / Title</label>
                     {{ form.title|as_crispy_field }}
+                    
+                    <label class="form-label fw-bold">বিস্তারিত বিবরণ / Description</label>
                     {{ form.description|as_crispy_field }}
 
                     <!-- Line Cut Fields -->
                     <div id="line-cut-fields" style="display:none;">
                         <div class="alert alert-warning py-2 mb-3">
                             <i class="bi bi-exclamation-triangle me-1"></i>
-                            <strong>Line Cut</strong> — Please specify the reason below
+                            <strong>লাইন কাট / Line Cut</strong> — নিচে কারণ উল্লেখ করুন / Please specify the reason
                         </div>
                         {{ form.line_cut_reason|as_crispy_field }}
                     </div>
 
+                    <label class="form-label fw-bold">কাজের এলাকা / Work Location</label>
                     {{ form.work_location|as_crispy_field }}
 
                     {% if form.instance.pk %}
@@ -133,10 +142,12 @@
             <!-- Assignment -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h6><i class="bi bi-person-check me-2 text-warning"></i>Assignment</h6>
+                    <h6><i class="bi bi-person-check me-2 text-warning"></i>বরাদ্দ / Assignment</h6>
                 </div>
                 <div class="card-body">
+                    <label class="form-label fw-bold">জোন / টিম / Zone / Team</label>
                     {{ form.assigned_team|as_crispy_field }}
+                    <label class="form-label fw-bold">প্রযুক্তিগত / Assigned To</label>
                     {{ form.assigned_to|as_crispy_field }}
                 </div>
             </div>
@@ -144,7 +155,7 @@
             <!-- Schedule -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h6><i class="bi bi-calendar-event me-2 text-purple"></i>Schedule</h6>
+                    <h6><i class="bi bi-calendar-event me-2 text-purple"></i>সময়সূচী / Schedule</h6>
                 </div>
                 <div class="card-body">
                     {{ form.scheduled_date|as_crispy_field }}
@@ -155,16 +166,55 @@
             <!-- Submit -->
             <div class="card">
                 <div class="card-body">
-                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                    <div class="alert alert-info py-2 mb-3" style="font-size:.78rem;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        সব তথ্য সঠিকভাবে পূরণ করুন / Please fill in all required fields
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-2" style="padding: 14px; font-size: .92rem;">
                         <i class="bi bi-check-lg me-1"></i>
-                        {% if ticket %}Update Ticket{% else %}Create Ticket{% endif %}
+                        {% if ticket %}আপডেট করুন / Update Ticket{% else %}টিকিট তৈরি করুন / Create Ticket{% endif %}
                     </button>
                     <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary w-100">
-                        Cancel
+                        বাতিল / Cancel
                     </a>
                 </div>
             </div>
         </div>
     </div>
 </form>
+
+<script>
+// Icon Grid — click to select ticket type
+(function() {
+    const grid = document.getElementById('ticketTypeGrid');
+    if (!grid) return;
+    
+    const typeField = document.getElementById('id_ticket_type');
+    const teamField = document.getElementById('id_assigned_team');
+    const priorityField = document.getElementById('id_priority');
+    
+    // If form already has a value, highlight the matching grid item
+    if (typeField && typeField.value) {
+        const existing = grid.querySelector(`[data-type="${typeField.value}"]`);
+        if (existing) existing.classList.add('selected');
+    }
+    
+    grid.querySelectorAll('.icon-grid-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // Deselect all
+            grid.querySelectorAll('.icon-grid-item').forEach(i => i.classList.remove('selected'));
+            // Select this
+            this.classList.add('selected');
+            
+            // Set form values
+            if (typeField) {
+                typeField.value = this.dataset.type;
+                typeField.dispatchEvent(new Event('change'));
+            }
+            if (teamField) teamField.value = this.dataset.team;
+            if (priorityField) priorityField.value = this.dataset.priority;
+        });
+    });
+})();
+</script>
 {% endblock %}
