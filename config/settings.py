@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'apps.tickets',
     'apps.stock',
     'apps.schedule',
+    'apps.whatsapp_bot',
 ]
 
 MIDDLEWARE = [
@@ -228,10 +229,31 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
-        }
+        },
+        'whatsapp_bot': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
     },
 }
 
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
+
+# ── WhatsApp Cloud API Configuration ─────────────────────────────────────────
+# Get these values from Meta Developer Console → Your App → WhatsApp → API Setup
+#
+# WHATSAPP_VERIFY_TOKEN:  Any random secret string you choose. Must match the
+#                         token you enter in Meta's webhook configuration page.
+#
+# WHATSAPP_ACCESS_TOKEN:  The temporary (24h) or permanent System User token
+#                         from Meta. Found under API Setup → "Temporary access token".
+#
+# WHATSAPP_PHONE_ID:      The "Phone number ID" (NOT the phone number itself).
+#                         Found under API Setup → "From" dropdown.
+#
+WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN', '')
+WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN', '')
+WHATSAPP_PHONE_ID = os.environ.get('WHATSAPP_PHONE_ID', '')

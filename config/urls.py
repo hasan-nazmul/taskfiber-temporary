@@ -19,6 +19,7 @@ urlpatterns = [
     path('tickets/', include('apps.tickets.urls')),
     path('stock/', include('apps.stock.urls')),
     path('schedule/', include('apps.schedule.urls')),
+    path('whatsapp/', include('apps.whatsapp_bot.urls')),
 ]
 
 if settings.DEBUG:
